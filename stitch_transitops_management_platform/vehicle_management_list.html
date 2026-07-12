@@ -1,0 +1,167 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TransitOps Vehicles</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="app.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="sidebar">
+        <div class="brand"><div class="brand-mark">TO</div><div class="brand-copy"><h1>TransitOps</h1><p data-profile-role></p></div></div>
+        <div class="nav-section">
+          <p class="nav-label">Workspace</p>
+          <a class="nav-link" href="fleet_manager_dashboard.html">Dashboard</a>
+          <a class="nav-link active" href="vehicle_management_list.html">Vehicles</a>
+          <a class="nav-link" href="driver_management_profile.html">Drivers</a>
+          <a class="nav-link" href="trip_management_dispatch_workflow.html">Trips</a>
+          <a class="nav-link" href="maintenence_fuel_dashboard.html">Maintenance & Fuel</a>
+          <a class="nav-link" href="analytics%20hub%20report.html">Reports</a>
+          <a class="nav-link" href="user_role_management.html">User Roles</a>
+        </div>
+        <div class="sidebar-footer"><button class="btn" data-signout>Sign Out</button></div>
+      </aside>
+      <div class="content">
+        <header class="topbar">
+          <div><h2>Vehicle management</h2><p>Create vehicles and monitor the live fleet list from <span class="inline-code">GET /vehicles</span>.</p></div>
+          <div class="topbar-actions"><span class="badge info">Role: <span data-profile-role></span></span></div>
+        </header>
+        <main class="page stack">
+          <div id="vehicle-message" class="hidden"></div>
+          <section class="grid cols-2">
+            <div class="form-card" id="vehicle-form-card">
+              <div class="kicker">Create vehicle</div>
+              <h3>Register a new asset</h3>
+              <p class="muted">This form is available only for <span class="inline-code">fleet_manager</span> sessions because the backend enforces that role.</p>
+              <form id="vehicle-form" class="stack">
+                <div class="field-grid">
+                  <div class="field"><label>Registration Number</label><input id="registration_number" required /></div>
+                  <div class="field"><label>Model</label><input id="model" required /></div>
+                  <div class="field"><label>Type</label><input id="type" placeholder="Mini Truck" required /></div>
+                  <div class="field"><label>Status</label>
+                    <select id="status"><option>Available</option><option>On Trip</option><option>In Shop</option><option>Retired</option></select>
+                  </div>
+                  <div class="field"><label>Max Load (kg)</label><input id="max_load_kg" type="number" min="1" step="0.01" required /></div>
+                  <div class="field"><label>Odometer</label><input id="odometer" type="number" min="0" step="0.01" required /></div>
+                  <div class="field full"><label>Acquisition Cost</label><input id="acquisition_cost" type="number" min="0" step="0.01" required /></div>
+                </div>
+                <div class="form-actions"><button class="btn primary" type="submit">Create Vehicle</button></div>
+              </form>
+            </div>
+
+            <div class="card">
+              <div class="kicker">Live summary</div>
+              <h3>Fleet status mix</h3>
+              <div class="metric-list" id="vehicle-summary"></div>
+              <div class="notice" style="margin-top: 16px;">Use the search below to filter by registration, model, or status.</div>
+            </div>
+          </section>
+
+          <section class="table-card">
+            <div class="toolbar">
+              <div>
+                <div class="kicker">Inventory</div>
+                <h3>Current vehicles</h3>
+              </div>
+              <input id="vehicle-search" placeholder="Search vehicles..." style="max-width: 280px;" />
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr><th>Registration</th><th>Model</th><th>Type</th><th>Status</th><th>Load</th><th>Odometer</th><th>Cost</th></tr>
+                </thead>
+                <tbody id="vehicle-table"></tbody>
+              </table>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+      let vehicles = [];
+
+      function showMessage(type, text) {
+        const el = document.getElementById("vehicle-message");
+        el.className = type === "error" ? "alert" : "notice";
+        el.textContent = text;
+      }
+
+      function renderVehicles() {
+        const query = document.getElementById("vehicle-search").value.trim().toLowerCase();
+        const filtered = vehicles.filter((vehicle) => {
+          const haystack = `${vehicle.registration_number} ${vehicle.model} ${vehicle.type} ${vehicle.status}`.toLowerCase();
+          return haystack.includes(query);
+        });
+
+        TransitOps.setHtml("vehicle-table", filtered.map((vehicle) => `
+          <tr>
+            <td>${TransitOps.escapeHtml(vehicle.registration_number)}</td>
+            <td>${TransitOps.escapeHtml(vehicle.model)}</td>
+            <td>${TransitOps.escapeHtml(vehicle.type)}</td>
+            <td>${TransitOps.badge(vehicle.status)}</td>
+            <td>${TransitOps.escapeHtml(vehicle.max_load_kg)} kg</td>
+            <td>${TransitOps.escapeHtml(vehicle.odometer)}</td>
+            <td>${TransitOps.formatCurrency(vehicle.acquisition_cost)}</td>
+          </tr>
+        `).join("") || '<tr><td colspan="7"><div class="empty-state">No vehicles match this search.</div></td></tr>');
+
+        const summary = filtered.reduce((acc, vehicle) => {
+          acc[vehicle.status] = (acc[vehicle.status] || 0) + 1;
+          return acc;
+        }, {});
+        TransitOps.setHtml("vehicle-summary", Object.entries(summary).map(([status, count]) => `
+          <div class="metric-item"><span>${TransitOps.badge(status)}</span><strong>${count}</strong></div>
+        `).join("") || '<div class="empty-state">No vehicles available yet.</div>');
+      }
+
+      async function fetchVehicles() {
+        vehicles = await TransitOps.request("/vehicles");
+        renderVehicles();
+      }
+
+      async function init() {
+        const session = await TransitOps.initProtectedPage();
+        if (!session) return;
+        if (session.role !== "fleet_manager") {
+          document.getElementById("vehicle-form-card").innerHTML = '<div class="kicker">Create vehicle</div><h3>Read-only access</h3><p class="muted">Your current role can view vehicles, but the backend only allows fleet managers to create them.</p>';
+        }
+
+        await fetchVehicles();
+
+        document.getElementById("vehicle-search").addEventListener("input", renderVehicles);
+        document.getElementById("vehicle-form")?.addEventListener("submit", async (event) => {
+          event.preventDefault();
+          try {
+            await TransitOps.request("/vehicles", {
+              method: "POST",
+              body: JSON.stringify({
+                registration_number: document.getElementById("registration_number").value.trim(),
+                model: document.getElementById("model").value.trim(),
+                type: document.getElementById("type").value.trim(),
+                max_load_kg: Number(document.getElementById("max_load_kg").value),
+                odometer: Number(document.getElementById("odometer").value),
+                acquisition_cost: Number(document.getElementById("acquisition_cost").value),
+                status: document.getElementById("status").value,
+              }),
+            });
+            showMessage("info", "Vehicle created successfully.");
+            event.target.reset();
+            await fetchVehicles();
+          } catch (error) {
+            showMessage("error", error.message);
+          }
+        });
+      }
+
+      init();
+    </script>
+  </body>
+</html>
+
+

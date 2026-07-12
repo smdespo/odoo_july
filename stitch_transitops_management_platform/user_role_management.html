@@ -1,0 +1,126 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TransitOps User Roles</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="app.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="sidebar">
+        <div class="brand"><div class="brand-mark">TO</div><div class="brand-copy"><h1>TransitOps</h1><p data-profile-role></p></div></div>
+        <div class="nav-section">
+          <p class="nav-label">Workspace</p>
+          <a class="nav-link" href="fleet_manager_dashboard.html">Dashboard</a>
+          <a class="nav-link" href="vehicle_management_list.html">Vehicles</a>
+          <a class="nav-link" href="driver_management_profile.html">Drivers</a>
+          <a class="nav-link" href="trip_management_dispatch_workflow.html">Trips</a>
+          <a class="nav-link" href="maintenence_fuel_dashboard.html">Maintenance & Fuel</a>
+          <a class="nav-link" href="analytics%20hub%20report.html">Reports</a>
+          <a class="nav-link active" href="user_role_management.html">User Roles</a>
+        </div>
+        <div class="sidebar-footer"><button class="btn" data-signout>Sign Out</button></div>
+      </aside>
+      <div class="content">
+        <header class="topbar">
+          <div><h2>User and role flow</h2><p>This page provisions users through the existing signup endpoint and shows the effective frontend role matrix.</p></div>
+          <div class="topbar-actions"><span class="badge info">Current role: <span data-profile-role></span></span></div>
+        </header>
+        <main class="page stack">
+          <div id="role-message" class="hidden"></div>
+          <section class="grid cols-2">
+            <div class="form-card">
+              <div class="kicker">Provision user</div>
+              <h3>Create a new login</h3>
+              <p class="muted">The backend currently exposes user creation through <span class="inline-code">POST /auth/signup</span>.</p>
+              <form id="user-form" class="stack">
+                <div class="field-grid">
+                  <div class="field"><label>Name</label><input id="new_user_name" required /></div>
+                  <div class="field"><label>Email</label><input id="new_user_email" type="email" required /></div>
+                  <div class="field"><label>Password</label><input id="new_user_password" type="password" required /></div>
+                  <div class="field"><label>Role</label>
+                    <select id="new_user_role">
+                      <option value="fleet_manager">fleet_manager</option>
+                      <option value="driver">driver</option>
+                      <option value="safety_officer">safety_officer</option>
+                      <option value="financial_analyst">financial_analyst</option>
+                    </select>
+                  </div>
+                </div>
+                <button class="btn primary" type="submit">Create User</button>
+              </form>
+            </div>
+
+            <div class="card">
+              <div class="kicker">Current session</div>
+              <h3>Authenticated identity</h3>
+              <div class="metric-list">
+                <div class="metric-item"><span>Name</span><strong data-profile-name>-</strong></div>
+                <div class="metric-item"><span>Email</span><strong data-profile-email>-</strong></div>
+                <div class="metric-item"><span>Role</span><strong data-profile-role>-</strong></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="table-card">
+            <div class="toolbar"><div><div class="kicker">Frontend role matrix</div><h3>Expected access by page</h3></div></div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Feature</th><th>fleet_manager</th><th>driver</th><th>safety_officer</th><th>financial_analyst</th></tr></thead>
+                <tbody>
+                  <tr><td>Create vehicle</td><td>Yes</td><td>No</td><td>No</td><td>No</td></tr>
+                  <tr><td>Create driver</td><td>Yes</td><td>No</td><td>Yes</td><td>No</td></tr>
+                  <tr><td>Create / dispatch trip</td><td>Yes</td><td>Yes</td><td>No</td><td>No</td></tr>
+                  <tr><td>Maintenance create / close</td><td>Yes</td><td>No</td><td>No</td><td>No</td></tr>
+                  <tr><td>Fuel log</td><td>Yes</td><td>Yes</td><td>No</td><td>No</td></tr>
+                  <tr><td>Expense log</td><td>Yes</td><td>No</td><td>No</td><td>Yes</td></tr>
+                  <tr><td>Reports</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+      function showMessage(type, text) {
+        const el = document.getElementById("role-message");
+        el.className = type === "error" ? "alert" : "notice";
+        el.textContent = text;
+      }
+
+      async function init() {
+        const session = await TransitOps.initProtectedPage();
+        if (!session) return;
+        document.getElementById("user-form").addEventListener("submit", async (event) => {
+          event.preventDefault();
+          try {
+            await TransitOps.request("/auth/signup", {
+              method: "POST",
+              body: JSON.stringify({
+                name: document.getElementById("new_user_name").value.trim(),
+                email: document.getElementById("new_user_email").value.trim(),
+                password: document.getElementById("new_user_password").value,
+                role: document.getElementById("new_user_role").value,
+              }),
+            });
+            showMessage("info", "User created successfully. They can now log in from the auth page.");
+            event.target.reset();
+          } catch (error) {
+            showMessage("error", error.message);
+          }
+        });
+      }
+
+      init();
+    </script>
+  </body>
+</html>
+
+

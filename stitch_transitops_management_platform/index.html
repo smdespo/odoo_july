@@ -1,0 +1,100 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TransitOps Frontend Hub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="app.css" />
+  </head>
+  <body>
+    <main class="page" style="max-width: 1240px; margin: 0 auto;">
+      <section class="hero-card">
+        <div class="kicker">Connected Frontend</div>
+        <h1 style="font-size: clamp(2rem, 5vw, 4rem); margin: 12px 0;">TransitOps control flow, now wired to your FastAPI backend.</h1>
+        <p class="muted" style="max-width: 760px; font-size: 1.06rem; line-height: 1.7;">
+          Use this hub to sign in, create fleet data, dispatch trips, track maintenance, and pull reports. The pages below now map to your backend endpoints instead of acting like static mockups.
+        </p>
+        <div class="hero-actions" style="margin-top: 22px;">
+          <a class="btn primary" href="auth%20login.html">Open Login</a>
+          <button class="btn" data-go-home>Resume Session</button>
+          <span class="badge info">API Base: <span data-api-base></span></span>
+        </div>
+      </section>
+
+      <section class="grid cols-4" style="margin-top: 24px;">
+        <a class="card" href="fleet_manager_dashboard.html">
+          <div class="kicker">Overview</div>
+          <h3>Fleet Dashboard</h3>
+          <p class="muted">Live counts for vehicles, drivers, trips, maintenance, and quick jump points into daily ops.</p>
+        </a>
+        <a class="card" href="vehicle_management_list.html">
+          <div class="kicker">CRUD</div>
+          <h3>Vehicle Management</h3>
+          <p class="muted">Create vehicles as fleet manager and browse the live vehicle inventory from MongoDB.</p>
+        </a>
+        <a class="card" href="driver_management_profile.html">
+          <div class="kicker">People</div>
+          <h3>Driver Operations</h3>
+          <p class="muted">Register drivers, review license status, and inspect the live driver roster.</p>
+        </a>
+        <a class="card" href="trip_management_dispatch_workflow.html">
+          <div class="kicker">Trips</div>
+          <h3>Dispatch Workflow</h3>
+          <p class="muted">Create, dispatch, complete, and cancel trips directly against the backend rules.</p>
+        </a>
+        <a class="card" href="maintenence_fuel_dashboard.html">
+          <div class="kicker">Ops</div>
+          <h3>Maintenance & Fuel</h3>
+          <p class="muted">Log service records, fuel entries, and expenses while watching operational costs accumulate.</p>
+        </a>
+        <a class="card" href="analytics%20hub%20report.html">
+          <div class="kicker">Reports</div>
+          <h3>Analytics Hub</h3>
+          <p class="muted">Call fleet utilization, ROI, fuel-efficiency, and operational-cost report endpoints.</p>
+        </a>
+        <a class="card" href="user_role_management.html">
+          <div class="kicker">Access</div>
+          <h3>User Role Flow</h3>
+          <p class="muted">Provision new users through signup and inspect the frontend role matrix for the platform.</p>
+        </a>
+        <a class="card" href="transitops_enterprise_logistics_excellence.html">
+          <div class="kicker">Landing</div>
+          <h3>Enterprise Experience</h3>
+          <p class="muted">High-level product landing page that now links cleanly into the connected app flow.</p>
+        </a>
+      </section>
+
+      <section class="grid cols-3" style="margin-top: 24px;">
+        <div class="stat-card">
+          <div class="kicker">Session</div>
+          <div class="value" id="session-status">Guest</div>
+          <p class="muted" id="session-detail">No active JWT session found in local storage.</p>
+        </div>
+        <div class="stat-card">
+          <div class="kicker">Backend Flow</div>
+          <div class="value">JWT</div>
+          <p class="muted">Signup or login returns a bearer token. Protected pages automatically reuse it for API calls.</p>
+        </div>
+        <div class="stat-card">
+          <div class="kicker">Recommended Order</div>
+          <div class="value">1 -> 6</div>
+          <p class="muted">Login, dashboard, vehicles, drivers, trips, then maintenance and reports for the smoothest testing path.</p>
+        </div>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+    <script>
+      TransitOps.fillSessionUi();
+      const session = TransitOps.getSession();
+      if (session) {
+        TransitOps.setText("session-status", session.role || "Authenticated");
+        TransitOps.setText("session-detail", `${session.email || session.user_id} is ready. Click Resume Session to continue.`);
+      }
+    </script>
+  </body>
+</html>
+

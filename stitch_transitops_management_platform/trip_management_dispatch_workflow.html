@@ -1,0 +1,233 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TransitOps Trips</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="app.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="sidebar">
+        <div class="brand"><div class="brand-mark">TO</div><div class="brand-copy"><h1>TransitOps</h1><p data-profile-role></p></div></div>
+        <div class="nav-section">
+          <p class="nav-label">Workspace</p>
+          <a class="nav-link" href="fleet_manager_dashboard.html">Dashboard</a>
+          <a class="nav-link" href="vehicle_management_list.html">Vehicles</a>
+          <a class="nav-link" href="driver_management_profile.html">Drivers</a>
+          <a class="nav-link active" href="trip_management_dispatch_workflow.html">Trips</a>
+          <a class="nav-link" href="maintenence_fuel_dashboard.html">Maintenance & Fuel</a>
+          <a class="nav-link" href="analytics%20hub%20report.html">Reports</a>
+          <a class="nav-link" href="user_role_management.html">User Roles</a>
+        </div>
+        <div class="sidebar-footer"><button class="btn" data-signout>Sign Out</button></div>
+      </aside>
+      <div class="content">
+        <header class="topbar">
+          <div><h2>Trip dispatch workflow</h2><p>Create, dispatch, complete, and cancel trips while following backend rules.</p></div>
+          <div class="topbar-actions"><span class="badge info">Role: <span data-profile-role></span></span></div>
+        </header>
+        <main class="page stack">
+          <div id="trip-message" class="hidden"></div>
+          <section class="grid cols-2">
+            <div class="form-card">
+              <div class="kicker">Create trip</div>
+              <h3>New trip draft</h3>
+              <form id="trip-form" class="stack">
+                <div class="field-grid">
+                  <div class="field"><label>Source</label><input id="trip_source" required /></div>
+                  <div class="field"><label>Destination</label><input id="trip_destination" required /></div>
+                  <div class="field"><label>Vehicle</label><select id="trip_vehicle" required></select></div>
+                  <div class="field"><label>Driver</label><select id="trip_driver" required></select></div>
+                  <div class="field"><label>Cargo Weight (kg)</label><input id="trip_cargo" type="number" min="1" step="0.01" required /></div>
+                  <div class="field"><label>Planned Distance (km)</label><input id="trip_distance" type="number" min="1" step="0.01" required /></div>
+                </div>
+                <div class="form-actions"><button class="btn primary" type="submit">Create Trip</button></div>
+              </form>
+            </div>
+
+            <div class="card">
+              <div class="kicker">Trip states</div>
+              <h3>Workflow guidance</h3>
+              <div class="metric-list">
+                <div class="metric-item"><span>Draft</span><span>Create only</span></div>
+                <div class="metric-item"><span>Dispatched</span><span>Vehicle + driver locked</span></div>
+                <div class="metric-item"><span>Completed</span><span>Requires final odometer, fuel, revenue</span></div>
+                <div class="metric-item"><span>Cancelled</span><span>Releases driver and vehicle</span></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="table-card">
+            <div class="toolbar">
+              <div><div class="kicker">Trips</div><h3>Live trip list</h3></div>
+              <button class="btn small" id="refresh-trips">Refresh</button>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Route</th><th>Vehicle</th><th>Driver</th><th>Status</th><th>Distance</th><th>Actions</th></tr></thead>
+                <tbody id="trip-table"></tbody>
+              </table>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+
+    <div class="dialog hidden" id="complete-dialog">
+      <div class="dialog-card">
+        <div class="toolbar"><div><div class="kicker">Complete trip</div><h3>Submit final metrics</h3></div><button class="btn small" id="close-complete">Close</button></div>
+        <form id="complete-form" class="stack">
+          <input id="complete-trip-id" type="hidden" />
+          <div class="field"><label>Final Odometer</label><input id="complete-odometer" type="number" min="0" step="0.01" required /></div>
+          <div class="field"><label>Fuel Consumed</label><input id="complete-fuel" type="number" min="0" step="0.01" required /></div>
+          <div class="field"><label>Revenue</label><input id="complete-revenue" type="number" min="0" step="0.01" required /></div>
+          <div class="form-actions"><button class="btn success" type="submit">Complete Trip</button></div>
+        </form>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+      let trips = [];
+      let vehicles = [];
+      let drivers = [];
+
+      function showMessage(type, text) {
+        const el = document.getElementById("trip-message");
+        el.className = type === "error" ? "alert" : "notice";
+        el.textContent = text;
+      }
+
+      function renderOptions() {
+        TransitOps.setHtml("trip_vehicle", vehicles.map((vehicle) => `<option value="${vehicle._id}">${TransitOps.escapeHtml(vehicle.registration_number)} - ${TransitOps.escapeHtml(vehicle.status)}</option>`).join(""));
+        TransitOps.setHtml("trip_driver", drivers.map((driver) => `<option value="${driver._id}">${TransitOps.escapeHtml(driver.name)} - ${TransitOps.escapeHtml(driver.status)}</option>`).join(""));
+      }
+
+      function renderTrips() {
+        TransitOps.setHtml("trip-table", trips.slice().reverse().map((trip) => `
+          <tr>
+            <td>${TransitOps.escapeHtml(trip.source)} -> ${TransitOps.escapeHtml(trip.destination)}</td>
+            <td>${TransitOps.escapeHtml(trip.vehicle_id)}</td>
+            <td>${TransitOps.escapeHtml(trip.driver_id)}</td>
+            <td>${TransitOps.badge(trip.status)}</td>
+            <td>${TransitOps.escapeHtml(trip.planned_distance_km)} km</td>
+            <td>
+              <div class="inline-actions">
+                ${trip.status === 'Draft' ? `<button class="btn small" data-action="dispatch" data-trip-id="${trip._id}">Dispatch</button>` : ''}
+                ${trip.status === 'Dispatched' ? `<button class="btn small success" data-action="complete" data-trip-id="${trip._id}">Complete</button>` : ''}
+                ${trip.status === 'Dispatched' ? `<button class="btn small danger" data-action="cancel" data-trip-id="${trip._id}">Cancel</button>` : ''}
+              </div>
+            </td>
+          </tr>
+        `).join("") || '<tr><td colspan="6"><div class="empty-state">No trips created yet.</div></td></tr>');
+      }
+
+      async function fetchTripData() {
+        [vehicles, drivers, trips] = await Promise.all([
+          TransitOps.request("/vehicles"),
+          TransitOps.request("/drivers"),
+          TransitOps.request("/trips"),
+        ]);
+        renderOptions();
+        renderTrips();
+      }
+
+      function openCompleteDialog(tripId) {
+        document.getElementById("complete-trip-id").value = tripId;
+        document.getElementById("complete-dialog").classList.remove("hidden");
+      }
+
+      function closeCompleteDialog() {
+        document.getElementById("complete-dialog").classList.add("hidden");
+        document.getElementById("complete-form").reset();
+      }
+
+      async function init() {
+        const session = await TransitOps.initProtectedPage();
+        if (!session) return;
+        await fetchTripData();
+
+        document.getElementById("trip-form").addEventListener("submit", async (event) => {
+          event.preventDefault();
+          try {
+            await TransitOps.request("/trips", {
+              method: "POST",
+              body: JSON.stringify({
+                source: document.getElementById("trip_source").value.trim(),
+                destination: document.getElementById("trip_destination").value.trim(),
+                vehicle_id: document.getElementById("trip_vehicle").value,
+                driver_id: document.getElementById("trip_driver").value,
+                cargo_weight_kg: Number(document.getElementById("trip_cargo").value),
+                planned_distance_km: Number(document.getElementById("trip_distance").value),
+              }),
+            });
+            showMessage("info", "Trip created successfully.");
+            event.target.reset();
+            await fetchTripData();
+          } catch (error) {
+            showMessage("error", error.message);
+          }
+        });
+
+        document.getElementById("refresh-trips").addEventListener("click", fetchTripData);
+        document.getElementById("close-complete").addEventListener("click", closeCompleteDialog);
+        document.getElementById("complete-dialog").addEventListener("click", (event) => {
+          if (event.target.id === "complete-dialog") closeCompleteDialog();
+        });
+
+        document.getElementById("trip-table").addEventListener("click", async (event) => {
+          const button = event.target.closest("button[data-action]");
+          if (!button) return;
+          const { action, tripId } = { action: button.dataset.action, tripId: button.dataset.tripId };
+
+          try {
+            if (action === "dispatch") {
+              await TransitOps.request(`/trips/${tripId}/dispatch`, { method: "POST" });
+              showMessage("info", "Trip dispatched.");
+            }
+            if (action === "cancel") {
+              await TransitOps.request(`/trips/${tripId}/cancel`, { method: "POST" });
+              showMessage("info", "Trip cancelled.");
+            }
+            if (action === "complete") {
+              openCompleteDialog(tripId);
+              return;
+            }
+            await fetchTripData();
+          } catch (error) {
+            showMessage("error", error.message);
+          }
+        });
+
+        document.getElementById("complete-form").addEventListener("submit", async (event) => {
+          event.preventDefault();
+          const tripId = document.getElementById("complete-trip-id").value;
+          try {
+            await TransitOps.request(`/trips/${tripId}/complete`, {
+              method: "POST",
+              body: JSON.stringify({
+                final_odometer: Number(document.getElementById("complete-odometer").value),
+                fuel_consumed: Number(document.getElementById("complete-fuel").value),
+                revenue: Number(document.getElementById("complete-revenue").value),
+              }),
+            });
+            closeCompleteDialog();
+            showMessage("info", "Trip completed.");
+            await fetchTripData();
+          } catch (error) {
+            showMessage("error", error.message);
+          }
+        });
+      }
+
+      init();
+    </script>
+  </body>
+</html>
+
+
+

@@ -1,0 +1,152 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TransitOps Drivers</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="app.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="sidebar">
+        <div class="brand"><div class="brand-mark">TO</div><div class="brand-copy"><h1>TransitOps</h1><p data-profile-role></p></div></div>
+        <div class="nav-section">
+          <p class="nav-label">Workspace</p>
+          <a class="nav-link" href="fleet_manager_dashboard.html">Dashboard</a>
+          <a class="nav-link" href="vehicle_management_list.html">Vehicles</a>
+          <a class="nav-link active" href="driver_management_profile.html">Drivers</a>
+          <a class="nav-link" href="trip_management_dispatch_workflow.html">Trips</a>
+          <a class="nav-link" href="maintenence_fuel_dashboard.html">Maintenance & Fuel</a>
+          <a class="nav-link" href="analytics%20hub%20report.html">Reports</a>
+          <a class="nav-link" href="user_role_management.html">User Roles</a>
+        </div>
+        <div class="sidebar-footer"><button class="btn" data-signout>Sign Out</button></div>
+      </aside>
+      <div class="content">
+        <header class="topbar">
+          <div><h2>Driver operations</h2><p>Register drivers and monitor current license / safety / availability data.</p></div>
+          <div class="topbar-actions"><span class="badge info">Role: <span data-profile-role></span></span></div>
+        </header>
+        <main class="page stack">
+          <div id="driver-message" class="hidden"></div>
+          <section class="grid cols-2">
+            <div class="form-card" id="driver-form-card">
+              <div class="kicker">Create driver</div>
+              <h3>Register a new driver</h3>
+              <form id="driver-form" class="stack">
+                <div class="field-grid">
+                  <div class="field"><label>Name</label><input id="driver_name" required /></div>
+                  <div class="field"><label>License Number</label><input id="license_number" required /></div>
+                  <div class="field"><label>License Category</label><input id="license_category" placeholder="LMV" required /></div>
+                  <div class="field"><label>License Expiry</label><input id="license_expiry" type="date" required /></div>
+                  <div class="field"><label>Contact Number</label><input id="contact_number" required /></div>
+                  <div class="field"><label>Safety Score</label><input id="safety_score" type="number" min="0" max="100" value="100" required /></div>
+                  <div class="field full"><label>Status</label><select id="driver_status"><option>Available</option><option>On Trip</option><option>Off Duty</option><option>Suspended</option></select></div>
+                </div>
+                <div class="form-actions"><button class="btn primary" type="submit">Create Driver</button></div>
+              </form>
+            </div>
+
+            <div class="card">
+              <div class="kicker">Live summary</div>
+              <h3>Driver readiness</h3>
+              <div class="metric-list" id="driver-summary"></div>
+            </div>
+          </section>
+
+          <section class="table-card">
+            <div class="toolbar">
+              <div><div class="kicker">Roster</div><h3>Current drivers</h3></div>
+              <input id="driver-search" placeholder="Search drivers..." style="max-width: 280px;" />
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Name</th><th>License</th><th>Category</th><th>Expiry</th><th>Safety</th><th>Status</th><th>Contact</th></tr></thead>
+                <tbody id="driver-table"></tbody>
+              </table>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+      let drivers = [];
+
+      function showMessage(type, text) {
+        const el = document.getElementById("driver-message");
+        el.className = type === "error" ? "alert" : "notice";
+        el.textContent = text;
+      }
+
+      function renderDrivers() {
+        const query = document.getElementById("driver-search").value.trim().toLowerCase();
+        const filtered = drivers.filter((driver) => `${driver.name} ${driver.license_number} ${driver.status}`.toLowerCase().includes(query));
+
+        TransitOps.setHtml("driver-table", filtered.map((driver) => `
+          <tr>
+            <td>${TransitOps.escapeHtml(driver.name)}</td>
+            <td>${TransitOps.escapeHtml(driver.license_number)}</td>
+            <td>${TransitOps.escapeHtml(driver.license_category)}</td>
+            <td>${TransitOps.escapeHtml(driver.license_expiry)}</td>
+            <td>${TransitOps.escapeHtml(driver.safety_score)}</td>
+            <td>${TransitOps.badge(driver.status)}</td>
+            <td>${TransitOps.escapeHtml(driver.contact_number)}</td>
+          </tr>
+        `).join("") || '<tr><td colspan="7"><div class="empty-state">No drivers found.</div></td></tr>');
+
+        const summary = filtered.reduce((acc, driver) => {
+          acc[driver.status] = (acc[driver.status] || 0) + 1;
+          return acc;
+        }, {});
+        TransitOps.setHtml("driver-summary", Object.entries(summary).map(([status, count]) => `<div class="metric-item"><span>${TransitOps.badge(status)}</span><strong>${count}</strong></div>`).join("") || '<div class="empty-state">No drivers yet.</div>');
+      }
+
+      async function fetchDrivers() {
+        drivers = await TransitOps.request("/drivers");
+        renderDrivers();
+      }
+
+      async function init() {
+        const session = await TransitOps.initProtectedPage();
+        if (!session) return;
+        if (!["fleet_manager", "safety_officer"].includes(session.role)) {
+          document.getElementById("driver-form-card").innerHTML = '<div class="kicker">Create driver</div><h3>Read-only access</h3><p class="muted">Only fleet managers and safety officers can register new drivers. You can still review the live roster below.</p>';
+        }
+
+        await fetchDrivers();
+        document.getElementById("driver-search").addEventListener("input", renderDrivers);
+        document.getElementById("driver-form")?.addEventListener("submit", async (event) => {
+          event.preventDefault();
+          try {
+            await TransitOps.request("/drivers", {
+              method: "POST",
+              body: JSON.stringify({
+                name: document.getElementById("driver_name").value.trim(),
+                license_number: document.getElementById("license_number").value.trim(),
+                license_category: document.getElementById("license_category").value.trim(),
+                license_expiry: document.getElementById("license_expiry").value,
+                contact_number: document.getElementById("contact_number").value.trim(),
+                safety_score: Number(document.getElementById("safety_score").value),
+                status: document.getElementById("driver_status").value,
+              }),
+            });
+            showMessage("info", "Driver registered successfully.");
+            event.target.reset();
+            await fetchDrivers();
+          } catch (error) {
+            showMessage("error", error.message);
+          }
+        });
+      }
+
+      init();
+    </script>
+  </body>
+</html>
+
+

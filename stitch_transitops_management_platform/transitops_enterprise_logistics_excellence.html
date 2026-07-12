@@ -1,0 +1,80 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TransitOps Enterprise</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="app.css" />
+  </head>
+  <body>
+    <main class="page" style="max-width: 1220px; margin: 0 auto;">
+      <section class="hero-card" style="padding: 42px; margin-top: 18px;">
+        <div class="kicker">Enterprise logistics experience</div>
+        <h1 style="font-size: clamp(2.5rem, 7vw, 5rem); margin: 12px 0; max-width: 860px;">A polished entry point into the connected TransitOps workflow.</h1>
+        <p class="muted" style="max-width: 760px; font-size: 1.08rem; line-height: 1.7;">
+          The landing experience now routes users into the real application flow instead of leaving them inside disconnected mock pages. Backend counts can be previewed below when a session exists.
+        </p>
+        <div class="hero-actions" style="margin-top: 24px;">
+          <a class="btn primary" href="auth%20login.html">Launch Control Center</a>
+          <button class="btn" data-go-home>Open Active Session</button>
+          <a class="btn ghost" href="index.html">Frontend Hub</a>
+        </div>
+      </section>
+
+      <section class="grid cols-3" style="margin-top: 24px;">
+        <div class="stat-card"><div class="kicker">Vehicles</div><div class="value" id="enterprise-vehicles">-</div><p class="muted">Registered assets in backend</p></div>
+        <div class="stat-card"><div class="kicker">Trips</div><div class="value" id="enterprise-trips">-</div><p class="muted">Workflow records created</p></div>
+        <div class="stat-card"><div class="kicker">Maintenance</div><div class="value" id="enterprise-maintenance">-</div><p class="muted">Service records currently stored</p></div>
+      </section>
+
+      <section class="grid cols-2" style="margin-top: 24px;">
+        <div class="card">
+          <div class="kicker">Connected flow</div>
+          <h3>What changed</h3>
+          <div class="metric-list">
+            <div class="metric-item"><span>Auth page</span><span>JWT login/signup</span></div>
+            <div class="metric-item"><span>Dashboard</span><span>Live collection counts</span></div>
+            <div class="metric-item"><span>Operations pages</span><span>Real API forms + tables</span></div>
+            <div class="metric-item"><span>Reports</span><span>CSV export + metrics</span></div>
+          </div>
+        </div>
+        <div class="card" id="enterprise-session-card">
+          <div class="kicker">Session state</div>
+          <h3 id="enterprise-session-title">No active session</h3>
+          <p class="muted" id="enterprise-session-copy">Sign in from the auth page to see backend metrics here.</p>
+        </div>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+    <script>
+      async function init() {
+        TransitOps.fillSessionUi();
+        const session = TransitOps.getSession();
+        if (!session) return;
+
+        document.getElementById("enterprise-session-title").textContent = `${session.role} session ready`;
+        document.getElementById("enterprise-session-copy").textContent = `${session.email || session.user_id} can jump straight into the connected workspace.`;
+
+        try {
+          const [vehicles, trips, maintenance] = await Promise.all([
+            TransitOps.request("/vehicles"),
+            TransitOps.request("/trips"),
+            TransitOps.request("/maintenance"),
+          ]);
+          TransitOps.setText("enterprise-vehicles", vehicles.length);
+          TransitOps.setText("enterprise-trips", trips.length);
+          TransitOps.setText("enterprise-maintenance", maintenance.length);
+        } catch (error) {
+          document.getElementById("enterprise-session-copy").textContent = error.message;
+        }
+      }
+
+      init();
+    </script>
+  </body>
+</html>
+

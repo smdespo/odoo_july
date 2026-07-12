@@ -1,0 +1,159 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TransitOps Analytics</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="app.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="sidebar">
+        <div class="brand"><div class="brand-mark">TO</div><div class="brand-copy"><h1>TransitOps</h1><p data-profile-role></p></div></div>
+        <div class="nav-section">
+          <p class="nav-label">Workspace</p>
+          <a class="nav-link" href="fleet_manager_dashboard.html">Dashboard</a>
+          <a class="nav-link" href="vehicle_management_list.html">Vehicles</a>
+          <a class="nav-link" href="driver_management_profile.html">Drivers</a>
+          <a class="nav-link" href="trip_management_dispatch_workflow.html">Trips</a>
+          <a class="nav-link" href="maintenence_fuel_dashboard.html">Maintenance & Fuel</a>
+          <a class="nav-link active" href="analytics%20hub%20report.html">Reports</a>
+          <a class="nav-link" href="user_role_management.html">User Roles</a>
+        </div>
+        <div class="sidebar-footer"><button class="btn" data-signout>Sign Out</button></div>
+      </aside>
+      <div class="content">
+        <header class="topbar">
+          <div><h2>Analytics and reports</h2><p>Backend-connected report cards for utilization, fuel efficiency, ROI, and operational cost.</p></div>
+          <div class="topbar-actions"><button class="btn small" id="export-costs">Export operational cost CSV</button></div>
+        </header>
+        <main class="page stack">
+          <div id="analytics-message" class="hidden"></div>
+          <section class="grid cols-4">
+            <div class="stat-card"><div class="kicker">Fleet Utilization</div><div class="value" id="utilization-value">-</div><p class="muted" id="utilization-copy">Loading...</p></div>
+            <div class="stat-card"><div class="kicker">Vehicle ROI</div><div class="value" id="roi-value">-</div><p class="muted" id="roi-copy">Select a vehicle below.</p></div>
+            <div class="stat-card"><div class="kicker">Fuel Efficiency</div><div class="value" id="efficiency-value">-</div><p class="muted" id="efficiency-copy">Select a vehicle below.</p></div>
+            <div class="stat-card"><div class="kicker">Operational Cost</div><div class="value" id="cost-value">-</div><p class="muted" id="cost-copy">Select a vehicle below.</p></div>
+          </section>
+
+          <section class="grid cols-2">
+            <div class="form-card">
+              <div class="kicker">Vehicle report selector</div>
+              <h3>Refresh vehicle-specific reports</h3>
+              <div class="field"><label>Vehicle</label><select id="report-vehicle"></select></div>
+              <div class="form-actions"><button class="btn primary" id="load-reports">Load Reports</button></div>
+            </div>
+            <div class="card">
+              <div class="kicker">Notes</div>
+              <h3>What this page uses</h3>
+              <div class="metric-list">
+                <div class="metric-item"><span>Fleet utilization</span><span class="inline-code">/reports/fleet-utilization</span></div>
+                <div class="metric-item"><span>Fuel efficiency</span><span class="inline-code">/reports/fuel-efficiency/{id}</span></div>
+                <div class="metric-item"><span>ROI</span><span class="inline-code">/reports/roi/{id}</span></div>
+                <div class="metric-item"><span>Operational cost</span><span class="inline-code">/vehicles/{id}/operational-cost</span></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="table-card">
+            <div class="toolbar"><div><div class="kicker">Fleet catalog</div><h3>Vehicle report targets</h3></div></div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Vehicle</th><th>Status</th><th>Type</th><th>Odometer</th><th>Acquisition Cost</th></tr></thead>
+                <tbody id="analytics-vehicle-table"></tbody>
+              </table>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+      let vehicles = [];
+
+      function showMessage(type, text) {
+        const el = document.getElementById("analytics-message");
+        el.className = type === "error" ? "alert" : "notice";
+        el.textContent = text;
+      }
+
+      async function loadVehicleReports(vehicleId) {
+        const [cost, efficiency, roi] = await Promise.all([
+          TransitOps.request(`/vehicles/${vehicleId}/operational-cost`),
+          TransitOps.request(`/reports/fuel-efficiency/${vehicleId}`),
+          TransitOps.request(`/reports/roi/${vehicleId}`),
+        ]);
+        TransitOps.setText("cost-value", TransitOps.formatCurrency(cost.total_operational_cost));
+        TransitOps.setText("cost-copy", `Fuel ${TransitOps.formatCurrency(cost.fuel_cost)} - Maintenance ${TransitOps.formatCurrency(cost.maintenance_cost)}`);
+        TransitOps.setText("efficiency-value", `${efficiency.efficiency_km_per_liter}`);
+        TransitOps.setText("efficiency-copy", `${efficiency.distance_km} km across ${efficiency.fuel_liters} liters`);
+        TransitOps.setText("roi-value", `${(roi.roi * 100).toFixed(2)}%`);
+        TransitOps.setText("roi-copy", `Revenue ${TransitOps.formatCurrency(roi.revenue)} - Acquisition ${TransitOps.formatCurrency(roi.acquisition_cost)}`);
+      }
+
+      async function init() {
+        const session = await TransitOps.initProtectedPage();
+        if (!session) return;
+        try {
+          const [vehicleList, utilization] = await Promise.all([
+            TransitOps.request("/vehicles"),
+            TransitOps.request("/reports/fleet-utilization"),
+          ]);
+          vehicles = vehicleList;
+          TransitOps.setText("utilization-value", `${utilization.fleet_utilization_percent}%`);
+          TransitOps.setText("utilization-copy", `${utilization.on_trip} on-trip out of ${utilization.total_vehicles} total vehicles`);
+          TransitOps.setHtml("report-vehicle", vehicles.map((vehicle) => `<option value="${vehicle._id}">${TransitOps.escapeHtml(vehicle.registration_number)} - ${TransitOps.escapeHtml(vehicle.status)}</option>`).join(""));
+          TransitOps.setHtml("analytics-vehicle-table", vehicles.map((vehicle) => `
+            <tr>
+              <td>${TransitOps.escapeHtml(vehicle.registration_number)}</td>
+              <td>${TransitOps.badge(vehicle.status)}</td>
+              <td>${TransitOps.escapeHtml(vehicle.type)}</td>
+              <td>${TransitOps.escapeHtml(vehicle.odometer)}</td>
+              <td>${TransitOps.formatCurrency(vehicle.acquisition_cost)}</td>
+            </tr>
+          `).join("") || '<tr><td colspan="5"><div class="empty-state">No vehicles available for reporting.</div></td></tr>');
+
+          if (vehicles.length) {
+            await loadVehicleReports(vehicles[0]._id);
+          }
+        } catch (error) {
+          showMessage("error", error.message);
+        }
+
+        document.getElementById("load-reports").addEventListener("click", async () => {
+          try {
+            await loadVehicleReports(document.getElementById("report-vehicle").value);
+          } catch (error) {
+            showMessage("error", error.message);
+          }
+        });
+
+        document.getElementById("export-costs").addEventListener("click", async () => {
+          try {
+            const response = await fetch(`${TransitOps.getApiBase()}/reports/export/operational-cost`, {
+              headers: { Authorization: `Bearer ${TransitOps.getSession().access_token}` },
+            });
+            if (!response.ok) throw new Error("Failed to export CSV");
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            const anchor = document.createElement("a");
+            anchor.href = url;
+            anchor.download = "operational_cost_report.csv";
+            anchor.click();
+            URL.revokeObjectURL(url);
+          } catch (error) {
+            showMessage("error", error.message);
+          }
+        });
+      }
+
+      init();
+    </script>
+  </body>
+</html>
+
+

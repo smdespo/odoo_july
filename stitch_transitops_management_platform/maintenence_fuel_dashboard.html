@@ -1,0 +1,231 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TransitOps Maintenance & Fuel</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="app.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="sidebar">
+        <div class="brand"><div class="brand-mark">TO</div><div class="brand-copy"><h1>TransitOps</h1><p data-profile-role></p></div></div>
+        <div class="nav-section">
+          <p class="nav-label">Workspace</p>
+          <a class="nav-link" href="fleet_manager_dashboard.html">Dashboard</a>
+          <a class="nav-link" href="vehicle_management_list.html">Vehicles</a>
+          <a class="nav-link" href="driver_management_profile.html">Drivers</a>
+          <a class="nav-link" href="trip_management_dispatch_workflow.html">Trips</a>
+          <a class="nav-link active" href="maintenence_fuel_dashboard.html">Maintenance & Fuel</a>
+          <a class="nav-link" href="analytics%20hub%20report.html">Reports</a>
+          <a class="nav-link" href="user_role_management.html">User Roles</a>
+        </div>
+        <div class="sidebar-footer"><button class="btn" data-signout>Sign Out</button></div>
+      </aside>
+      <div class="content">
+        <header class="topbar">
+          <div><h2>Maintenance, fuel, and expense logs</h2><p>Log operational costs, track open maintenance, and inspect per-vehicle operational cost totals.</p></div>
+          <div class="topbar-actions"><span class="badge info">API: <span data-api-base></span></span></div>
+        </header>
+        <main class="page stack">
+          <div id="ops-message" class="hidden"></div>
+          <section class="grid cols-3">
+            <div class="form-card">
+              <div class="kicker">Maintenance</div>
+              <h3>Log service record</h3>
+              <form id="maintenance-form" class="stack">
+                <div class="field"><label>Vehicle</label><select id="maintenance_vehicle" required></select></div>
+                <div class="field"><label>Description</label><textarea id="maintenance_description" required></textarea></div>
+                <div class="field"><label>Cost</label><input id="maintenance_cost" type="number" min="0" step="0.01" value="0" /></div>
+                <button class="btn primary" type="submit">Create Maintenance</button>
+              </form>
+            </div>
+            <div class="form-card">
+              <div class="kicker">Fuel</div>
+              <h3>Add fuel log</h3>
+              <form id="fuel-form" class="stack">
+                <div class="field"><label>Vehicle</label><select id="fuel_vehicle" required></select></div>
+                <div class="field"><label>Liters</label><input id="fuel_liters" type="number" min="0.01" step="0.01" required /></div>
+                <div class="field"><label>Cost</label><input id="fuel_cost" type="number" min="0" step="0.01" required /></div>
+                <div class="field"><label>Log Date</label><input id="fuel_date" type="date" required /></div>
+                <button class="btn success" type="submit">Add Fuel Log</button>
+              </form>
+            </div>
+            <div class="form-card">
+              <div class="kicker">Expense</div>
+              <h3>Add expense</h3>
+              <form id="expense-form" class="stack">
+                <div class="field"><label>Vehicle</label><select id="expense_vehicle" required></select></div>
+                <div class="field"><label>Type</label><input id="expense_type" placeholder="Toll" required /></div>
+                <div class="field"><label>Amount</label><input id="expense_amount" type="number" min="0" step="0.01" required /></div>
+                <div class="field"><label>Expense Date</label><input id="expense_date" type="date" required /></div>
+                <button class="btn" type="submit">Add Expense</button>
+              </form>
+            </div>
+          </section>
+
+          <section class="grid cols-2">
+            <div class="table-card">
+              <div class="toolbar"><div><div class="kicker">Maintenance records</div><h3>Current maintenance</h3></div><button class="btn small" id="refresh-maintenance">Refresh</button></div>
+              <div class="table-wrap">
+                <table>
+                  <thead><tr><th>Vehicle</th><th>Description</th><th>Status</th><th>Cost</th><th>Created</th><th>Action</th></tr></thead>
+                  <tbody id="maintenance-table"></tbody>
+                </table>
+              </div>
+            </div>
+            <div class="card">
+              <div class="kicker">Operational cost</div>
+              <h3>Per-vehicle cost check</h3>
+              <div class="field"><label>Select vehicle</label><select id="cost_vehicle"></select></div>
+              <div id="cost-summary" class="metric-list" style="margin-top: 14px;"></div>
+              <button class="btn small" id="load-cost">Load cost summary</button>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+      let vehicles = [];
+      let maintenanceRecords = [];
+
+      function showMessage(type, text) {
+        const el = document.getElementById("ops-message");
+        el.className = type === "error" ? "alert" : "notice";
+        el.textContent = text;
+      }
+
+      function todayValue() {
+        return new Date().toISOString().slice(0, 10);
+      }
+
+      function renderVehicleOptions() {
+        const options = vehicles.map((vehicle) => `<option value="${vehicle._id}">${TransitOps.escapeHtml(vehicle.registration_number)} - ${TransitOps.escapeHtml(vehicle.status)}</option>`).join("");
+        ["maintenance_vehicle", "fuel_vehicle", "expense_vehicle", "cost_vehicle"].forEach((id) => TransitOps.setHtml(id, options));
+      }
+
+      function renderMaintenance() {
+        TransitOps.setHtml("maintenance-table", maintenanceRecords.map((record) => `
+          <tr>
+            <td>${TransitOps.escapeHtml(record.vehicle_id)}</td>
+            <td>${TransitOps.escapeHtml(record.description)}</td>
+            <td>${TransitOps.badge(record.status)}</td>
+            <td>${TransitOps.formatCurrency(record.cost)}</td>
+            <td>${TransitOps.formatDate(record.created_at)}</td>
+            <td>${record.status === 'Open' ? `<button class="btn small" data-close-maintenance="${record._id}">Close</button>` : '<span class="muted">Closed</span>'}</td>
+          </tr>
+        `).join("") || '<tr><td colspan="6"><div class="empty-state">No maintenance records yet.</div></td></tr>');
+      }
+
+      async function fetchData() {
+        [vehicles, maintenanceRecords] = await Promise.all([
+          TransitOps.request("/vehicles"),
+          TransitOps.request("/maintenance"),
+        ]);
+        renderVehicleOptions();
+        renderMaintenance();
+      }
+
+      async function init() {
+        const session = await TransitOps.initProtectedPage();
+        if (!session) return;
+
+        document.getElementById("fuel_date").value = todayValue();
+        document.getElementById("expense_date").value = todayValue();
+        await fetchData();
+
+        document.getElementById("maintenance-form").addEventListener("submit", async (event) => {
+          event.preventDefault();
+          try {
+            await TransitOps.request("/maintenance", {
+              method: "POST",
+              body: JSON.stringify({
+                vehicle_id: document.getElementById("maintenance_vehicle").value,
+                description: document.getElementById("maintenance_description").value.trim(),
+                cost: Number(document.getElementById("maintenance_cost").value || 0),
+              }),
+            });
+            showMessage("info", "Maintenance record created.");
+            event.target.reset();
+            await fetchData();
+          } catch (error) {
+            showMessage("error", error.message);
+          }
+        });
+
+        document.getElementById("fuel-form").addEventListener("submit", async (event) => {
+          event.preventDefault();
+          try {
+            await TransitOps.request("/fuel-logs", {
+              method: "POST",
+              body: JSON.stringify({
+                vehicle_id: document.getElementById("fuel_vehicle").value,
+                liters: Number(document.getElementById("fuel_liters").value),
+                cost: Number(document.getElementById("fuel_cost").value),
+                log_date: document.getElementById("fuel_date").value,
+              }),
+            });
+            showMessage("info", "Fuel log added.");
+            event.target.reset();
+            document.getElementById("fuel_date").value = todayValue();
+          } catch (error) {
+            showMessage("error", error.message);
+          }
+        });
+
+        document.getElementById("expense-form").addEventListener("submit", async (event) => {
+          event.preventDefault();
+          try {
+            await TransitOps.request("/expenses", {
+              method: "POST",
+              body: JSON.stringify({
+                vehicle_id: document.getElementById("expense_vehicle").value,
+                type: document.getElementById("expense_type").value.trim(),
+                amount: Number(document.getElementById("expense_amount").value),
+                expense_date: document.getElementById("expense_date").value,
+              }),
+            });
+            showMessage("info", "Expense recorded.");
+            event.target.reset();
+            document.getElementById("expense_date").value = todayValue();
+          } catch (error) {
+            showMessage("error", error.message);
+          }
+        });
+
+        document.getElementById("maintenance-table").addEventListener("click", async (event) => {
+          const button = event.target.closest("button[data-close-maintenance]");
+          if (!button) return;
+          try {
+            await TransitOps.request(`/maintenance/${button.dataset.closeMaintenance}/close`, { method: "POST" });
+            showMessage("info", "Maintenance record closed.");
+            await fetchData();
+          } catch (error) {
+            showMessage("error", error.message);
+          }
+        });
+
+        document.getElementById("refresh-maintenance").addEventListener("click", fetchData);
+        document.getElementById("load-cost").addEventListener("click", async () => {
+          try {
+            const vehicleId = document.getElementById("cost_vehicle").value;
+            const cost = await TransitOps.request(`/vehicles/${vehicleId}/operational-cost`);
+            TransitOps.setHtml("cost-summary", Object.entries(cost).map(([key, value]) => `<div class="metric-item"><span>${TransitOps.escapeHtml(key)}</span><strong>${TransitOps.formatCurrency(value)}</strong></div>`).join(""));
+          } catch (error) {
+            showMessage("error", error.message);
+          }
+        });
+      }
+
+      init();
+    </script>
+  </body>
+</html>
+
+
+

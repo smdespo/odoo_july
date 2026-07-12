@@ -1,0 +1,204 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TransitOps Authentication</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="app.css" />
+  </head>
+  <body>
+    <div class="auth-shell">
+      <section class="auth-side">
+        <div class="auth-panel stack">
+          <div class="kicker">TransitOps Access Layer</div>
+          <h1 style="font-size: clamp(2.4rem, 6vw, 4.8rem); margin: 0;">Secure your fleet workflow with a real JWT session.</h1>
+          <p class="muted" style="font-size: 1.05rem; line-height: 1.7;">
+            This page is connected to your FastAPI auth endpoints. Sign up a user, log in, and every protected frontend page will automatically use the stored bearer token.
+          </p>
+          <div class="grid cols-3">
+            <div class="card">
+              <div class="kicker">Auth</div>
+              <h3>JWT Bearer</h3>
+              <p class="muted">The token is stored locally and attached to future API requests.</p>
+            </div>
+            <div class="card">
+              <div class="kicker">Roles</div>
+              <h3>Role-aware</h3>
+              <p class="muted">The redirect after login changes based on the user role from the backend.</p>
+            </div>
+            <div class="card">
+              <div class="kicker">Config</div>
+              <h3>Editable API Base</h3>
+              <p class="muted">Point the frontend at a different backend URL without touching code.</p>
+            </div>
+          </div>
+          <a class="btn ghost" href="index.html">Back to frontend hub</a>
+        </div>
+      </section>
+
+      <section class="auth-form-wrap">
+        <div class="form-card" style="width: min(560px, 100%);">
+          <div class="toolbar">
+            <div>
+              <div class="kicker">Authentication</div>
+              <h2 style="margin: 8px 0 0;">Control Center Access</h2>
+            </div>
+            <div class="tabs">
+              <button class="tab active" id="login-tab" type="button">Login</button>
+              <button class="tab" id="signup-tab" type="button">Signup</button>
+            </div>
+          </div>
+
+          <div class="field" style="margin-bottom: 16px;">
+            <label for="api-base">Backend Base URL</label>
+            <input id="api-base" type="text" placeholder="http://127.0.0.1:8000" />
+          </div>
+
+          <div id="auth-message" class="hidden"></div>
+
+          <form id="login-form" class="stack">
+            <div class="field">
+              <label for="login-email">Email</label>
+              <input id="login-email" type="email" required />
+            </div>
+            <div class="field">
+              <label for="login-password">Password</label>
+              <input id="login-password" type="password" required />
+            </div>
+            <div class="form-actions">
+              <button class="btn primary" type="submit">Sign In</button>
+              <button class="btn" type="button" id="demo-fill">Fill Demo Values</button>
+            </div>
+          </form>
+
+          <form id="signup-form" class="stack hidden">
+            <div class="field-grid">
+              <div class="field">
+                <label for="signup-name">Full Name</label>
+                <input id="signup-name" type="text" required />
+              </div>
+              <div class="field">
+                <label for="signup-email">Email</label>
+                <input id="signup-email" type="email" required />
+              </div>
+              <div class="field">
+                <label for="signup-password">Password</label>
+                <input id="signup-password" type="password" required />
+              </div>
+              <div class="field">
+                <label for="signup-role">Role</label>
+                <select id="signup-role" required>
+                  <option value="fleet_manager">fleet_manager</option>
+                  <option value="driver">driver</option>
+                  <option value="safety_officer">safety_officer</option>
+                  <option value="financial_analyst">financial_analyst</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-actions">
+              <button class="btn success" type="submit">Create User & Sign In</button>
+            </div>
+          </form>
+        </div>
+      </section>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+      const loginTab = document.getElementById("login-tab");
+      const signupTab = document.getElementById("signup-tab");
+      const loginForm = document.getElementById("login-form");
+      const signupForm = document.getElementById("signup-form");
+      const apiBaseInput = document.getElementById("api-base");
+      const authMessage = document.getElementById("auth-message");
+
+      function showMessage(type, text) {
+        authMessage.className = type === "error" ? "alert" : "notice";
+        authMessage.textContent = text;
+      }
+
+      function clearMessage() {
+        authMessage.className = "hidden";
+        authMessage.textContent = "";
+      }
+
+      function switchTab(mode) {
+        const isLogin = mode === "login";
+        loginTab.classList.toggle("active", isLogin);
+        signupTab.classList.toggle("active", !isLogin);
+        loginForm.classList.toggle("hidden", !isLogin);
+        signupForm.classList.toggle("hidden", isLogin);
+        clearMessage();
+      }
+
+      apiBaseInput.value = TransitOps.getApiBase();
+      if (TransitOps.getSession()) {
+        showMessage("info", "An existing session was found. You can continue with it or sign in again.");
+      }
+
+      loginTab.addEventListener("click", () => switchTab("login"));
+      signupTab.addEventListener("click", () => switchTab("signup"));
+
+      apiBaseInput.addEventListener("change", () => {
+        TransitOps.setApiBase(apiBaseInput.value.trim());
+        apiBaseInput.value = TransitOps.getApiBase();
+      });
+
+      document.getElementById("demo-fill").addEventListener("click", () => {
+        document.getElementById("login-email").value = "fleet@example.com";
+        document.getElementById("login-password").value = "StrongPassword123";
+      });
+
+      loginForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        clearMessage();
+        TransitOps.setApiBase(apiBaseInput.value.trim());
+        try {
+          const response = await TransitOps.request("/auth/login", {
+            method: "POST",
+            body: JSON.stringify({
+              email: document.getElementById("login-email").value.trim(),
+              password: document.getElementById("login-password").value,
+            }),
+          });
+          TransitOps.saveSession(response);
+          showMessage("info", "Login successful. Redirecting...");
+          setTimeout(() => {
+            window.location.href = TransitOps.getHomeForRole(response.role);
+          }, 500);
+        } catch (error) {
+          showMessage("error", error.message);
+        }
+      });
+
+      signupForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        clearMessage();
+        TransitOps.setApiBase(apiBaseInput.value.trim());
+        try {
+          const response = await TransitOps.request("/auth/signup", {
+            method: "POST",
+            body: JSON.stringify({
+              name: document.getElementById("signup-name").value.trim(),
+              email: document.getElementById("signup-email").value.trim(),
+              password: document.getElementById("signup-password").value,
+              role: document.getElementById("signup-role").value,
+            }),
+          });
+          TransitOps.saveSession(response);
+          showMessage("info", "Signup successful. Redirecting into the app...");
+          setTimeout(() => {
+            window.location.href = TransitOps.getHomeForRole(response.role);
+          }, 500);
+        } catch (error) {
+          showMessage("error", error.message);
+        }
+      });
+    </script>
+  </body>
+</html>
+
+

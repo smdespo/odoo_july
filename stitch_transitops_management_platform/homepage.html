@@ -1,0 +1,262 @@
+﻿<!DOCTYPE html>
+<html class="dark" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>TransitOps | Enterprise Logistics OS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=block" rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              background: "#020617",
+              surface: "#030a12",
+              "surface-container": "#0f172a",
+              "surface-container-low": "#0b1c30",
+              "surface-container-high": "#1e293b",
+              primary: "#4edea3",
+              secondary: "#38bdf8",
+              outline: "#475569",
+              "outline-variant": "#1e293b",
+              "on-surface": "#f8fafc",
+              "on-surface-variant": "#94a3b8",
+              "on-primary-fixed": "#002113",
+            },
+            fontFamily: {
+              display: ["Outfit"],
+              body: ["Inter"],
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      body {
+        background: #020617;
+        color: #f8fafc;
+        font-family: "Inter", sans-serif;
+      }
+      .glass-nav {
+        background: rgba(2, 6, 23, 0.72);
+        backdrop-filter: blur(20px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      }
+      .glass-card {
+        background: rgba(15, 23, 42, 0.62);
+        backdrop-filter: blur(14px);
+        border: 1px solid rgba(255, 255, 255, 0.07);
+        transition: all 0.35s ease;
+      }
+      .glass-card:hover {
+        transform: translateY(-4px);
+        border-color: rgba(78, 222, 163, 0.28);
+      }
+      .hero-vignette {
+        background: linear-gradient(to bottom, rgba(2, 6, 23, 0.35) 0%, rgba(2, 6, 23, 0.82) 68%, #020617 100%);
+      }
+      .btn-primary {
+        background: linear-gradient(135deg, #4edea3 0%, #059669 100%);
+        color: #002113;
+        box-shadow: 0 16px 30px rgba(78, 222, 163, 0.22);
+      }
+      .btn-secondary {
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+      }
+      .text-gradient-emerald {
+        background: linear-gradient(135deg, #4edea3 0%, #10b981 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+      .reveal {
+        opacity: 0;
+        transform: translateY(22px);
+        transition: opacity 0.8s ease, transform 0.8s ease;
+      }
+      .reveal-active {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    </style>
+  </head>
+  <body class="bg-background text-on-surface overflow-x-hidden">
+    <header class="fixed top-0 left-0 right-0 z-50 glass-nav">
+      <nav class="mx-auto flex max-w-screen-2xl items-center justify-between px-5 py-4 md:px-16">
+        <div class="flex items-center gap-4">
+          <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary text-on-primary-fixed text-lg font-extrabold">TO</div>
+          <div>
+            <div class="font-display text-2xl font-bold tracking-tight">TransitOps</div>
+            <div class="text-xs uppercase tracking-[0.25em] text-on-surface-variant">Enterprise Control Layer</div>
+          </div>
+        </div>
+        <div class="hidden items-center gap-8 lg:flex text-sm uppercase tracking-[0.18em] text-on-surface-variant">
+          <a class="transition-colors hover:text-primary" href="#capabilities">Platform</a>
+          <a class="transition-colors hover:text-primary" href="#workspace">Workspace</a>
+          <a class="transition-colors hover:text-primary" href="#launch">Launch</a>
+        </div>
+        <div class="flex items-center gap-3">
+          <a class="hidden rounded-full px-4 py-2 text-sm font-semibold text-on-surface-variant transition-colors hover:text-on-surface sm:inline-flex" href="auth%20login.html">Login</a>
+          <button class="rounded-full px-5 py-3 text-sm font-bold uppercase tracking-[0.16em] btn-primary transition-transform hover:scale-105 active:scale-95" data-go-home id="resume-top">Resume Session</button>
+        </div>
+      </nav>
+    </header>
+
+    <main>
+      <section class="relative flex min-h-screen items-center justify-center overflow-hidden">
+        <div class="absolute inset-0 z-0">
+          <img alt="Logistics command center" class="h-full w-full scale-105 object-cover" src="https://lh3.googleusercontent.com/aida/AP1WRLu9ZEoz_XIw6XqZ1972GtdaBNTEY7LXjryuOc_izKwJfp0DVMyM_FRk5Sry6rXt-gW8rkZKDTxFq4hHSK2QudKBLYd33QYl00Rf40q7Z6NZFvCmNW1QQ2MiNgt0VeP0WoSdj5IlMz62pC7p8IE65-yt8fnpA0EYIagNPbpNiwrODlfgzYa4pQZTCkcJ4MIhPCZoXyqRuOandaNA3KIW0bx4_MtrfXXgrMpVzR-W8SN4v5BEl-ld2yDJog" />
+          <div class="absolute inset-0 hero-vignette"></div>
+        </div>
+        <div class="relative z-10 mx-auto max-w-6xl px-5 pt-24 text-center md:px-16">
+          <div class="mb-10 inline-flex items-center gap-3 rounded-full border border-primary/20 bg-primary/10 px-4 py-1.5 backdrop-blur-md">
+            <span class="relative flex h-2 w-2">
+              <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75"></span>
+              <span class="relative inline-flex h-2 w-2 rounded-full bg-primary"></span>
+            </span>
+            <span class="text-[11px] font-bold uppercase tracking-[0.22em] text-primary">Backend-connected logistics workspace</span>
+          </div>
+          <h1 class="font-display text-5xl font-bold leading-[1.05] md:text-[84px]">
+            Precision in Motion.<br />
+            Start from one <span class="text-gradient-emerald">landing page</span>,<br />
+            move into the full platform.
+          </h1>
+          <p class="mx-auto mt-8 max-w-3xl text-lg leading-8 text-on-surface-variant md:text-xl">
+            This page is now your front door. From here the user can log in, resume an active JWT session, or step into the connected dashboards for vehicles, drivers, trips, maintenance, and analytics.
+          </p>
+          <div class="mt-12 flex flex-col items-center justify-center gap-5 sm:flex-row" id="launch">
+            <a class="rounded-2xl px-10 py-5 text-lg font-bold transition-all hover:scale-[1.02] btn-primary" href="auth%20login.html">Launch Control Center</a>
+            <button class="rounded-2xl px-10 py-5 text-lg font-bold transition-all hover:bg-white/10 btn-secondary" data-go-home>Open Active Workspace</button>
+          </div>
+          <div class="mx-auto mt-10 max-w-3xl rounded-[28px] glass-card p-6 text-left">
+            <div class="grid gap-6 md:grid-cols-3">
+              <div>
+                <div class="text-xs font-bold uppercase tracking-[0.18em] text-primary">Session</div>
+                <div class="mt-3 text-2xl font-bold" id="landing-session-role">Guest</div>
+                <div class="mt-1 text-sm text-on-surface-variant" id="landing-session-detail">No active JWT session found.</div>
+              </div>
+              <div>
+                <div class="text-xs font-bold uppercase tracking-[0.18em] text-primary">API Base</div>
+                <div class="mt-3 text-lg font-semibold" data-api-base>http://127.0.0.1:8000</div>
+                <div class="mt-1 text-sm text-on-surface-variant">Configured automatically from the auth page.</div>
+              </div>
+              <div>
+                <div class="text-xs font-bold uppercase tracking-[0.18em] text-primary">Flow</div>
+                <div class="mt-3 text-lg font-semibold">Landing -> Login -> App</div>
+                <div class="mt-1 text-sm text-on-surface-variant">One clean route into every connected page.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background to-transparent"></div>
+      </section>
+
+      <section class="border-y border-white/5 bg-surface-container-lowest py-12">
+        <div class="mx-auto max-w-screen-2xl px-5 md:px-16">
+          <p class="mb-10 text-center text-[10px] font-semibold uppercase tracking-[0.32em] text-on-surface-variant opacity-60">How the user moves through the platform</p>
+          <div class="grid gap-6 md:grid-cols-4" id="workspace">
+            <div class="glass-card reveal rounded-[26px] p-8">
+              <div class="text-primary text-sm font-bold uppercase tracking-[0.18em]">1. Enter</div>
+              <h3 class="mt-4 font-display text-3xl font-semibold">Landing</h3>
+              <p class="mt-3 text-on-surface-variant">`homepage.html` is now the primary brand-first entry point.</p>
+            </div>
+            <div class="glass-card reveal rounded-[26px] p-8">
+              <div class="text-primary text-sm font-bold uppercase tracking-[0.18em]">2. Authenticate</div>
+              <h3 class="mt-4 font-display text-3xl font-semibold">JWT Login</h3>
+              <p class="mt-3 text-on-surface-variant">Users sign in or sign up through the real FastAPI auth endpoints.</p>
+            </div>
+            <div class="glass-card reveal rounded-[26px] p-8">
+              <div class="text-primary text-sm font-bold uppercase tracking-[0.18em]">3. Operate</div>
+              <h3 class="mt-4 font-display text-3xl font-semibold">Dashboards</h3>
+              <p class="mt-3 text-on-surface-variant">Vehicles, drivers, trips, maintenance, and reports all use live backend data.</p>
+            </div>
+            <div class="glass-card reveal rounded-[26px] p-8">
+              <div class="text-primary text-sm font-bold uppercase tracking-[0.18em]">4. Continue</div>
+              <h3 class="mt-4 font-display text-3xl font-semibold">Resume</h3>
+              <p class="mt-3 text-on-surface-variant">Saved JWT session sends the user straight back into the correct workspace.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="mx-auto max-w-screen-2xl px-5 py-24 md:px-16" id="capabilities">
+        <div class="mb-16 flex flex-col justify-between gap-8 md:flex-row md:items-end">
+          <div class="max-w-2xl">
+            <span class="mb-4 block text-sm font-bold uppercase tracking-[0.18em] text-primary">Connected Pages</span>
+            <h2 class="font-display text-4xl font-semibold leading-tight md:text-6xl">Every major frontend screen now has a cleaner path from the landing page.</h2>
+          </div>
+          <a class="text-sm font-bold uppercase tracking-[0.18em] text-primary transition-colors hover:text-white" href="auth%20login.html">Go to Login</a>
+        </div>
+        <div class="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+          <a class="glass-card reveal rounded-[28px] p-8" href="fleet_manager_dashboard.html">
+            <div class="text-primary text-sm font-bold uppercase tracking-[0.18em]">Dashboard</div>
+            <h3 class="mt-4 font-display text-3xl font-semibold">Operations overview</h3>
+            <p class="mt-3 text-on-surface-variant">Live backend counts and quick actions.</p>
+          </a>
+          <a class="glass-card reveal rounded-[28px] p-8" href="vehicle_management_list.html">
+            <div class="text-primary text-sm font-bold uppercase tracking-[0.18em]">Vehicles</div>
+            <h3 class="mt-4 font-display text-3xl font-semibold">Fleet inventory</h3>
+            <p class="mt-3 text-on-surface-variant">Create and browse real vehicle records.</p>
+          </a>
+          <a class="glass-card reveal rounded-[28px] p-8" href="trip_management_dispatch_workflow.html">
+            <div class="text-primary text-sm font-bold uppercase tracking-[0.18em]">Trips</div>
+            <h3 class="mt-4 font-display text-3xl font-semibold">Dispatch workflow</h3>
+            <p class="mt-3 text-on-surface-variant">Create, dispatch, cancel, and complete trips.</p>
+          </a>
+          <a class="glass-card reveal rounded-[28px] p-8" href="analytics%20hub%20report.html">
+            <div class="text-primary text-sm font-bold uppercase tracking-[0.18em]">Reports</div>
+            <h3 class="mt-4 font-display text-3xl font-semibold">Analytics hub</h3>
+            <p class="mt-3 text-on-surface-variant">ROI, utilization, fuel efficiency, and CSV export.</p>
+          </a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="border-t border-white/5 bg-surface-container-lowest py-10">
+      <div class="mx-auto flex max-w-screen-2xl flex-col gap-6 px-5 text-sm text-on-surface-variant md:flex-row md:items-center md:justify-between md:px-16">
+        <p>TransitOps landing page is now the default entry experience for the platform.</p>
+        <div class="flex items-center gap-6">
+          <a class="transition-colors hover:text-white" href="auth%20login.html">Login</a>
+          <a class="transition-colors hover:text-white" href="fleet_manager_dashboard.html">Dashboard</a>
+          <a class="transition-colors hover:text-white" href="maintenence_fuel_dashboard.html">Operations</a>
+        </div>
+      </div>
+    </footer>
+
+    <script src="app.js"></script>
+    <script>
+      const session = TransitOps.getSession();
+      TransitOps.fillSessionUi();
+
+      if (session) {
+        document.getElementById("landing-session-role").textContent = session.role || "Authenticated";
+        document.getElementById("landing-session-detail").textContent = `${session.email || session.user_id} can jump back into the workspace.`;
+      }
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("reveal-active");
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.12 });
+
+      document.querySelectorAll(".reveal").forEach((node) => observer.observe(node));
+
+      window.addEventListener("scroll", () => {
+        const header = document.querySelector("header");
+        header.style.background = window.scrollY > 48 ? "rgba(2, 6, 23, 0.92)" : "rgba(2, 6, 23, 0.72)";
+      });
+
+      document.getElementById("resume-top").addEventListener("click", () => {
+        if (!TransitOps.getSession()) {
+          window.location.href = "auth%20login.html";
+        }
+      });
+    </script>
+  </body>
+</html>

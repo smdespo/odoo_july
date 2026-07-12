@@ -54,3 +54,9 @@ export function computeFuelEfficiency(distanceKm, liters) {
   if (!liters) return 0;
   return distanceKm / liters;
 }
+
+export function isLicenseExpiringSoon(driver, withinDays = 30, today = new Date()) {
+  const expiry = new Date(driver.licenseExpiry);
+  const diffDays = (expiry - today) / (1000 * 60 * 60 * 24);
+  return diffDays >= 0 && diffDays <= withinDays;
+}

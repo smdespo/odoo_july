@@ -3,7 +3,16 @@ import pymongo
 
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017/")
 DB_NAME = "odoo_gandhinagar"
-COLLECTION_NAME = "signup"
+
+COLLECTIONS = [
+    "users",
+    "vehicles",
+    "drivers",
+    "trips",
+    "maintenance_logs",
+    "fuel_logs",
+    "expenses",
+]
 
 
 def init_db():
@@ -11,16 +20,19 @@ def init_db():
     client.admin.command("ping")
 
     db = client[DB_NAME]
-    if COLLECTION_NAME not in db.list_collection_names():
-        db.create_collection(COLLECTION_NAME)
 
-    signup = db[COLLECTION_NAME]
-    print(f"Connected to MongoDB and initialized '{DB_NAME}.{COLLECTION_NAME}'.")
-    return client, db, signup
+    for name in COLLECTIONS:
+        if name not in db.list_collection_names():
+            db.create_collection(name)
 
+    # Unique indexes -> business rules from PS ("registration number must be unique" etc.)
+    db["users"].create_index("email", unique=True)
+    db["vehicles"].create_index("registration_number", unique=True)
+    db["drivers"].create_index("license_number", unique=True)
 
+    print(f"Connected to MongoDB. Initialized '{DB_NAME}' with collections: {COLLECTIONS}")
+    return client, db
 
 
 if __name__ == "__main__":
     init_db()
-

@@ -1,13 +1,13 @@
 import os
-from datetime import datetime, timedelta
-from passlib.context import CryptContext
-from jose import jwt, JWTError
+from datetime import datetime, timedelta, timezone
 
-SECRET_KEY = os.getenv("JWT_SECRET", "change-this-secret-key")  # move to .env before demo
+from jose import JWTError, jwt
+from passlib.context import CryptContext
+
+SECRET_KEY = os.getenv("JWT_SECRET", "change-this-secret-key")
 ALGORITHM = "HS256"
 TOKEN_EXPIRE_HOURS = 12
 
-# PBKDF2 handles long passwords safely and avoids the bcrypt/passlib version clash.
 pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 
 
@@ -23,7 +23,7 @@ def create_token(user_id: str, role: str) -> str:
     payload = {
         "user_id": user_id,
         "role": role,
-        "exp": datetime.utcnow() + timedelta(hours=TOKEN_EXPIRE_HOURS),
+        "exp": datetime.now(timezone.utc) + timedelta(hours=TOKEN_EXPIRE_HOURS),
     }
     return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 

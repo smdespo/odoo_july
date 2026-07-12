@@ -1,0 +1,33 @@
+@import "tailwindcss";
+
+@theme {
+  /* Brand */
+  --color-brand-900: #171B24;   /* sidebar bg */
+  --color-brand-800: #1F2530;   /* sidebar hover */
+  --color-brand-accent: #F0A93B; /* amber CTA, from mockup */
+  --color-brand-accent-hover: #DB9420;
+
+  /* Surface */
+  --color-surface: #F7F8FA;
+  --color-surface-card: #FFFFFF;
+  --color-surface-border: #E5E8EC;
+
+  /* Status semantics (reused across Vehicles, Drivers, Trips) */
+  --color-status-available: #16A34A;
+  --color-status-available-bg: #DCFCE7;
+  --color-status-ontrip: #2563EB;
+  --color-status-ontrip-bg: #DBEAFE;
+  --color-status-shop: #EA8C1F;
+  --color-status-shop-bg: #FEF3E2;
+  --color-status-retired: #DC2626;
+  --color-status-retired-bg: #FEE2E2;
+  --color-status-offduty: #6B7280;
+  --color-status-offduty-bg: #F1F2F4;
+
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+
+body {
+  background: var(--color-surface);
+  font-family: var(--font-sans);
+}

@@ -21,13 +21,16 @@
           <a class="nav-link" href="trip_management_dispatch_workflow.html">Trips</a>
           <a class="nav-link" href="maintenence_fuel_dashboard.html">Maintenance & Fuel</a>
           <a class="nav-link active" href="analytics%20hub%20report.html">Reports</a>
+          <a class="nav-link" href="whether.html">Breakdown AI</a>
+          <a class="nav-link" href="pred.html">Repair AI</a>
+          <a class="nav-link" href="fuel.html">Fuel AI</a>
           <a class="nav-link" href="user_role_management.html">User Roles</a>
         </div>
         <div class="sidebar-footer"><button class="btn" data-signout>Sign Out</button></div>
       </aside>
       <div class="content">
         <header class="topbar">
-          <div><h2>Analytics and reports</h2><p>Backend-connected report cards for utilization, fuel efficiency, ROI, and operational cost.</p></div>
+          <div><h2>Analytics and reports</h2><p>Backend-connected reporting plus predictive intelligence entry points.</p></div>
           <div class="topbar-actions"><button class="btn small" id="export-costs">Export operational cost CSV</button></div>
         </header>
         <main class="page stack">
@@ -37,6 +40,24 @@
             <div class="stat-card"><div class="kicker">Vehicle ROI</div><div class="value" id="roi-value">-</div><p class="muted" id="roi-copy">Select a vehicle below.</p></div>
             <div class="stat-card"><div class="kicker">Fuel Efficiency</div><div class="value" id="efficiency-value">-</div><p class="muted" id="efficiency-copy">Select a vehicle below.</p></div>
             <div class="stat-card"><div class="kicker">Operational Cost</div><div class="value" id="cost-value">-</div><p class="muted" id="cost-copy">Select a vehicle below.</p></div>
+          </section>
+
+          <section class="grid cols-3">
+            <a class="card" href="whether.html">
+              <div class="kicker">Predictive AI</div>
+              <h3>Breakdown risk</h3>
+              <p class="muted">Score a single vehicle or run a fleet scan for high-risk assets.</p>
+            </a>
+            <a class="card" href="pred.html">
+              <div class="kicker">Predictive AI</div>
+              <h3>Repair time</h3>
+              <p class="muted">Estimate workshop hours before slotting jobs into maintenance planning.</p>
+            </a>
+            <a class="card" href="fuel.html">
+              <div class="kicker">Predictive AI</div>
+              <h3>Fuel demand</h3>
+              <p class="muted">Forecast trip fuel and cost before dispatching a route.</p>
+            </a>
           </section>
 
           <section class="grid cols-2">
@@ -155,5 +176,3 @@
     </script>
   </body>
 </html>
-
-

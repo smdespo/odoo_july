@@ -5,7 +5,7 @@
   const ROLE_HOME = {
     fleet_manager: "fleet_manager_dashboard.html",
     driver: "trip_management_dispatch_workflow.html",
-    safety_officer: "driver_management_profile.html",
+    safety_officer: "whether.html",
     financial_analyst: "analytics%20hub%20report.html",
   };
 
@@ -131,10 +131,10 @@
 
   function statusTone(status) {
     const value = String(status || "").toLowerCase();
-    if (value.includes("available") || value.includes("completed") || value.includes("open") === false && value.includes("active")) return "success";
-    if (value.includes("trip") || value.includes("draft") || value.includes("pending") || value.includes("dispatched")) return "info";
+    if (value.includes("available") || value.includes("completed") || (value.includes("open") === false && value.includes("active"))) return "success";
+    if (value.includes("trip") || value.includes("draft") || value.includes("pending") || value.includes("dispatched") || value.includes("moderate")) return "info";
     if (value.includes("shop") || value.includes("maintenance") || value.includes("warning")) return "warning";
-    if (value.includes("retired") || value.includes("cancel") || value.includes("suspend") || value.includes("error")) return "danger";
+    if (value.includes("retired") || value.includes("cancel") || value.includes("suspend") || value.includes("error") || value.includes("high")) return "danger";
     return "info";
   }
 
@@ -231,5 +231,3 @@
 })();
 
 window.TransitOps = TransitOps;
-
-

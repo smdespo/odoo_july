@@ -1,0 +1,133 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TransitOps Repair Prediction</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="app.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="sidebar">
+        <div class="brand"><div class="brand-mark">TO</div><div class="brand-copy"><h1>TransitOps</h1><p data-profile-role></p></div></div>
+        <div class="nav-section">
+          <p class="nav-label">Workspace</p>
+          <a class="nav-link" href="fleet_manager_dashboard.html">Dashboard</a>
+          <a class="nav-link" href="vehicle_management_list.html">Vehicles</a>
+          <a class="nav-link" href="driver_management_profile.html">Drivers</a>
+          <a class="nav-link" href="trip_management_dispatch_workflow.html">Trips</a>
+          <a class="nav-link" href="maintenence_fuel_dashboard.html">Maintenance & Fuel</a>
+          <a class="nav-link" href="analytics%20hub%20report.html">Reports</a>
+          <a class="nav-link" href="whether.html">Breakdown AI</a>
+          <a class="nav-link active" href="pred.html">Repair AI</a>
+          <a class="nav-link" href="fuel.html">Fuel AI</a>
+        </div>
+        <div class="sidebar-footer"><button class="btn" data-signout>Sign Out</button></div>
+      </aside>
+
+      <div class="content">
+        <header class="topbar">
+          <div>
+            <h2>Repair time prediction</h2>
+            <p>Estimate how long a repair will take before assigning the job to the workshop queue.</p>
+          </div>
+          <div class="topbar-actions">
+            <a class="btn small" href="whether.html">Breakdown AI</a>
+            <a class="btn small" href="fuel.html">Fuel AI</a>
+          </div>
+        </header>
+
+        <main class="page stack">
+          <div id="repair-message" class="hidden"></div>
+          <section class="grid cols-2">
+            <form class="form-card stack" id="repair-form">
+              <div>
+                <div class="kicker">Maintenance Intelligence</div>
+                <h3>Repair prediction inputs</h3>
+              </div>
+              <div class="field-grid">
+                <div class="field"><label>Vehicle Type</label><select id="vehicle_type"><option>Truck</option><option>Van</option><option>Mini Truck</option><option>Bus</option></select></div>
+                <div class="field"><label>Vehicle Age (Years)</label><input id="vehicle_age_years" min="0" type="number" value="5" /></div>
+                <div class="field"><label>Odometer (km)</label><input id="odometer_km" min="0" type="number" value="180000" /></div>
+                <div class="field"><label>Maintenance Count</label><input id="maintenance_count" min="0" type="number" value="6" /></div>
+                <div class="field"><label>Repair Type</label><select id="repair_type"><option>Engine Repair</option><option>Brake Replacement</option><option>Electrical Diagnostics</option><option>Suspension Work</option><option>Transmission Service</option></select></div>
+                <div class="field"><label>Severity</label><select id="severity"><option>Low</option><option selected>Medium</option><option>High</option><option>Critical</option></select></div>
+                <div class="field"><label>Parts Available</label><select id="parts_available"><option value="true">Yes</option><option value="false">No</option></select></div>
+                <div class="field"><label>Technician Experience (Years)</label><input id="technician_experience_years" min="0" type="number" value="8" /></div>
+                <div class="field full"><label>Workshop Load (Active Jobs)</label><input id="workshop_load_active_jobs" min="0" type="number" value="4" /></div>
+              </div>
+              <div class="form-actions"><button class="btn primary" type="submit">Predict Repair Time</button></div>
+            </form>
+
+            <div class="card stack">
+              <div>
+                <div class="kicker">Prediction Result</div>
+                <h3>Workshop turnaround</h3>
+              </div>
+              <div class="score-value" id="repair-hours">-- hr</div>
+              <div class="pill-row">
+                <span class="pill">Turnaround: <strong id="turnaround-band">-</strong></span>
+              </div>
+              <div class="metric-list" id="repair-metrics">
+                <div class="metric-item"><span>Service Window</span><span>Awaiting prediction</span></div>
+                <div class="metric-item"><span>Risk Note</span><span>Awaiting prediction</span></div>
+              </div>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+      function showMessage(type, text) {
+        const el = document.getElementById("repair-message");
+        el.className = type === "error" ? "alert" : "notice";
+        el.textContent = text;
+      }
+
+      function readPayload() {
+        return {
+          vehicle_type: document.getElementById("vehicle_type").value,
+          vehicle_age_years: Number(document.getElementById("vehicle_age_years").value),
+          odometer_km: Number(document.getElementById("odometer_km").value),
+          maintenance_count: Number(document.getElementById("maintenance_count").value),
+          repair_type: document.getElementById("repair_type").value,
+          severity: document.getElementById("severity").value,
+          parts_available: document.getElementById("parts_available").value === "true",
+          technician_experience_years: Number(document.getElementById("technician_experience_years").value),
+          workshop_load_active_jobs: Number(document.getElementById("workshop_load_active_jobs").value),
+        };
+      }
+
+      async function init() {
+        const session = await TransitOps.initProtectedPage({ allowedRoles: ["fleet_manager", "safety_officer"] });
+        if (!session) return;
+
+        document.getElementById("repair-form").addEventListener("submit", async (event) => {
+          event.preventDefault();
+          try {
+            const result = await TransitOps.request("/ml/predict/repair-time", {
+              method: "POST",
+              body: JSON.stringify(readPayload()),
+            });
+            TransitOps.setText("repair-hours", `${result.predicted_repair_time_hours} hr`);
+            TransitOps.setText("turnaround-band", result.turnaround_band);
+            TransitOps.setHtml("repair-metrics", `
+              <div class="metric-item"><span>Service Window</span><span>${TransitOps.escapeHtml(result.service_window)}</span></div>
+              <div class="metric-item"><span>Risk Note</span><span>${TransitOps.escapeHtml(result.risk_note)}</span></div>
+            `);
+            showMessage("notice", "Repair estimate refreshed.");
+          } catch (error) {
+            showMessage("error", error.message);
+          }
+        });
+      }
+
+      init();
+    </script>
+  </body>
+</html>

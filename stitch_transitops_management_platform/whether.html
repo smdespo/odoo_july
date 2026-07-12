@@ -1,0 +1,195 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TransitOps Breakdown Intelligence</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="app.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="sidebar">
+        <div class="brand"><div class="brand-mark">TO</div><div class="brand-copy"><h1>TransitOps</h1><p data-profile-role></p></div></div>
+        <div class="nav-section">
+          <p class="nav-label">Workspace</p>
+          <a class="nav-link" href="fleet_manager_dashboard.html">Dashboard</a>
+          <a class="nav-link" href="vehicle_management_list.html">Vehicles</a>
+          <a class="nav-link" href="driver_management_profile.html">Drivers</a>
+          <a class="nav-link" href="trip_management_dispatch_workflow.html">Trips</a>
+          <a class="nav-link" href="maintenence_fuel_dashboard.html">Maintenance & Fuel</a>
+          <a class="nav-link" href="analytics%20hub%20report.html">Reports</a>
+          <a class="nav-link active" href="whether.html">Breakdown AI</a>
+          <a class="nav-link" href="pred.html">Repair AI</a>
+          <a class="nav-link" href="fuel.html">Fuel AI</a>
+        </div>
+        <div class="sidebar-footer stack">
+          <div class="card" style="padding: 16px;">
+            <div class="kicker">Safety View</div>
+            <strong data-profile-name>Loading...</strong>
+            <p class="muted" data-profile-email style="margin-bottom: 0;"></p>
+          </div>
+          <button class="btn" data-signout>Sign Out</button>
+        </div>
+      </aside>
+
+      <div class="content">
+        <header class="topbar">
+          <div>
+            <h2>Breakdown risk intelligence</h2>
+            <p>Predict potential breakdown probability and scan the fleet for vehicles that deserve preventive attention.</p>
+          </div>
+          <div class="topbar-actions">
+            <a class="btn small" href="pred.html">Repair AI</a>
+            <a class="btn small" href="fuel.html">Fuel AI</a>
+          </div>
+        </header>
+
+        <main class="page stack">
+          <div id="breakdown-message" class="hidden"></div>
+          <section class="hero-card">
+            <div class="kicker">Predictive Flow</div>
+            <h3 style="font-size: 2rem; margin-bottom: 10px;">See risk before the breakdown happens.</h3>
+            <p class="muted">Use single-vehicle scoring for operational decisions, then run a fleet scan to prioritize inspections across the entire asset base.</p>
+          </section>
+
+          <section class="grid cols-2">
+            <form class="form-card stack" id="breakdown-form">
+              <div>
+                <div class="kicker">Input</div>
+                <h3>Breakdown risk inputs</h3>
+              </div>
+              <div class="field-grid">
+                <div class="field"><label>Vehicle Age (Years)</label><input id="age_years" min="0" type="number" value="6" /></div>
+                <div class="field"><label>Odometer (km)</label><input id="odometer_km" min="0" type="number" value="220000" /></div>
+                <div class="field"><label>Trips Completed</label><input id="trips_completed" min="0" type="number" value="800" /></div>
+                <div class="field"><label>Fuel Efficiency (km/l)</label><input id="fuel_efficiency_kmpl" min="0.1" step="0.1" type="number" value="3.8" /></div>
+                <div class="field"><label>Maintenance Count</label><input id="maintenance_count" min="0" type="number" value="7" /></div>
+                <div class="field"><label>Avg Load %</label><input id="average_load_percent" max="100" min="0" type="number" value="74" /></div>
+                <div class="field"><label>Avg Trip Distance (km)</label><input id="average_trip_distance_km" min="0" type="number" value="320" /></div>
+                <div class="field"><label>Engine Temperature (C)</label><input id="engine_temperature_c" min="0" step="0.1" type="number" value="95" /></div>
+                <div class="field full"><label>Tire Health %</label><input id="tire_health_percent" max="100" min="0" type="number" value="58" /></div>
+              </div>
+              <div class="form-actions">
+                <button class="btn primary" type="submit">Predict Breakdown Risk</button>
+                <button class="btn" id="scan-fleet" type="button">Run Fleet Risk Scan</button>
+              </div>
+            </form>
+
+            <div class="card stack">
+              <div>
+                <div class="kicker">Result</div>
+                <h3>Current risk readout</h3>
+              </div>
+              <div class="score-panel">
+                <div class="score-value" id="risk-score">--%</div>
+                <div class="progress"><span id="risk-progress" style="width: 0%;"></span></div>
+                <div class="pill-row">
+                  <span class="pill">Risk Level: <strong id="risk-level">-</strong></span>
+                  <span class="pill">Prediction: <strong id="risk-predicted">-</strong></span>
+                </div>
+              </div>
+              <div class="metric-list" id="risk-recommendations">
+                <div class="metric-item"><span>Run a prediction</span><span>Awaiting input</span></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="table-card">
+            <div class="toolbar">
+              <div>
+                <div class="kicker">Fleet scan</div>
+                <h3>Highest-risk vehicles</h3>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Registration</th><th>Type</th><th>Status</th><th>Risk</th><th>Level</th></tr></thead>
+                <tbody id="fleet-risk-table"><tr><td colspan="5"><div class="empty-state">Run fleet scan to load risk ranking.</div></td></tr></tbody>
+              </table>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+      function showMessage(type, text) {
+        const el = document.getElementById("breakdown-message");
+        el.className = type === "error" ? "alert" : "notice";
+        el.textContent = text;
+      }
+
+      function readPayload() {
+        return {
+          age_years: Number(document.getElementById("age_years").value),
+          odometer_km: Number(document.getElementById("odometer_km").value),
+          trips_completed: Number(document.getElementById("trips_completed").value),
+          fuel_efficiency_kmpl: Number(document.getElementById("fuel_efficiency_kmpl").value),
+          maintenance_count: Number(document.getElementById("maintenance_count").value),
+          average_load_percent: Number(document.getElementById("average_load_percent").value),
+          average_trip_distance_km: Number(document.getElementById("average_trip_distance_km").value),
+          engine_temperature_c: Number(document.getElementById("engine_temperature_c").value),
+          tire_health_percent: Number(document.getElementById("tire_health_percent").value),
+        };
+      }
+
+      function renderRisk(result) {
+        const percent = (result.breakdown_probability * 100).toFixed(1);
+        TransitOps.setText("risk-score", `${percent}%`);
+        TransitOps.setText("risk-level", result.risk_level);
+        TransitOps.setText("risk-predicted", result.breakdown_predicted ? "Likely" : "Stable");
+        document.getElementById("risk-progress").style.width = `${percent}%`;
+        TransitOps.setHtml("risk-recommendations", result.recommendations.map((item, index) => `
+          <div class="metric-item"><span>Action ${index + 1}</span><span>${TransitOps.escapeHtml(item)}</span></div>
+        `).join(""));
+      }
+
+      async function runFleetScan() {
+        const result = await TransitOps.request("/ml/fleet-risk-scan");
+        TransitOps.setHtml("fleet-risk-table", result.items.map((item) => `
+          <tr>
+            <td>${TransitOps.escapeHtml(item.registration_number)}</td>
+            <td>${TransitOps.escapeHtml(item.vehicle_type)}</td>
+            <td>${TransitOps.badge(item.current_status)}</td>
+            <td>${(item.breakdown_probability * 100).toFixed(1)}%</td>
+            <td>${TransitOps.badge(item.risk_level)}</td>
+          </tr>
+        `).join("") || '<tr><td colspan="5"><div class="empty-state">No vehicles available for risk scan.</div></td></tr>');
+        showMessage("notice", `Scanned ${result.vehicles_scanned} vehicles. ${result.high_risk_count} came back as moderate or high risk.`);
+      }
+
+      async function init() {
+        const session = await TransitOps.initProtectedPage({ allowedRoles: ["fleet_manager", "safety_officer"] });
+        if (!session) return;
+
+        document.getElementById("breakdown-form").addEventListener("submit", async (event) => {
+          event.preventDefault();
+          try {
+            const result = await TransitOps.request("/ml/predict/breakdown-risk", {
+              method: "POST",
+              body: JSON.stringify(readPayload()),
+            });
+            renderRisk(result);
+            showMessage("notice", "Breakdown prediction updated.");
+          } catch (error) {
+            showMessage("error", error.message);
+          }
+        });
+
+        document.getElementById("scan-fleet").addEventListener("click", async () => {
+          try {
+            await runFleetScan();
+          } catch (error) {
+            showMessage("error", error.message);
+          }
+        });
+      }
+
+      init();
+    </script>
+  </body>
+</html>

@@ -27,6 +27,9 @@
           <a class="nav-link" href="trip_management_dispatch_workflow.html">Trips</a>
           <a class="nav-link" href="maintenence_fuel_dashboard.html">Maintenance & Fuel</a>
           <a class="nav-link" href="analytics%20hub%20report.html">Reports</a>
+          <a class="nav-link" href="whether.html">Breakdown AI</a>
+          <a class="nav-link" href="pred.html">Repair AI</a>
+          <a class="nav-link" href="fuel.html">Fuel AI</a>
           <a class="nav-link" href="user_role_management.html">User Roles</a>
         </div>
         <div class="sidebar-footer stack">
@@ -43,7 +46,7 @@
         <header class="topbar">
           <div>
             <h2>Operations dashboard</h2>
-            <p>Live backend counts, recent records, and quick actions for your fleet workspace.</p>
+            <p>Live backend counts, recent records, and a cleaner path into operations and ML intelligence.</p>
           </div>
           <div class="topbar-actions">
             <span class="badge info">API: <span data-api-base></span></span>
@@ -55,11 +58,11 @@
           <section class="hero-card">
             <div class="kicker">Session Context</div>
             <h3 style="font-size: 2rem; margin-bottom: 8px;">Welcome back, <span data-profile-name>Operator</span>.</h3>
-            <p class="muted">This dashboard pulls live counts from the backend collections and gives you one-click entry into the pages that actually mutate data.</p>
+            <p class="muted">Run day-to-day operations, then jump into prediction pages for proactive decisions before dispatch or maintenance scheduling.</p>
             <div class="hero-actions" style="margin-top: 18px;">
               <a class="btn primary" href="vehicle_management_list.html">Manage Vehicles</a>
               <a class="btn" href="trip_management_dispatch_workflow.html">Dispatch Trips</a>
-              <a class="btn" href="analytics%20hub%20report.html">Open Reports</a>
+              <a class="btn" href="whether.html">Open AI Risk Flow</a>
             </div>
           </section>
 
@@ -68,6 +71,27 @@
             <div class="stat-card"><div class="kicker">Drivers</div><div class="value" id="stat-drivers">-</div><p class="muted">Driver records in system</p></div>
             <div class="stat-card"><div class="kicker">Trips</div><div class="value" id="stat-trips">-</div><p class="muted">All trip documents</p></div>
             <div class="stat-card"><div class="kicker">Maintenance</div><div class="value" id="stat-maintenance">-</div><p class="muted">Maintenance records logged</p></div>
+          </section>
+
+          <section class="grid cols-3">
+            <div class="card">
+              <div class="kicker">AI Flow</div>
+              <h3>Breakdown intelligence</h3>
+              <p class="muted">Use the breakdown page to score single vehicles or scan the fleet for high-risk assets.</p>
+              <div class="inline-actions"><a class="btn small primary" href="whether.html">Open Breakdown AI</a></div>
+            </div>
+            <div class="card">
+              <div class="kicker">AI Flow</div>
+              <h3>Repair planning</h3>
+              <p class="muted">Estimate workshop turnaround before opening or prioritizing maintenance jobs.</p>
+              <div class="inline-actions"><a class="btn small primary" href="pred.html">Open Repair AI</a></div>
+            </div>
+            <div class="card">
+              <div class="kicker">AI Flow</div>
+              <h3>Fuel planning</h3>
+              <p class="muted">Forecast route fuel demand and approximate cost before dispatch.</p>
+              <div class="inline-actions"><a class="btn small primary" href="fuel.html">Open Fuel AI</a></div>
+            </div>
           </section>
 
           <section class="grid cols-2">
@@ -111,13 +135,13 @@
                 <div class="metric-item"><span>1. Signup/Login</span><span>JWT</span></div>
                 <div class="metric-item"><span>2. Create vehicle</span><span>fleet_manager</span></div>
                 <div class="metric-item"><span>3. Create driver</span><span>manager or safety</span></div>
-                <div class="metric-item"><span>4. Create trip</span><span>driver or manager</span></div>
+                <div class="metric-item"><span>4. Run ML insights</span><span>AI pages</span></div>
               </div>
             </div>
             <div class="card">
               <div class="kicker">Role guard</div>
               <h3>Create vehicle access</h3>
-              <p class="muted">Backend still restricts <span class="inline-code">POST /vehicles</span> to <span class="inline-code">fleet_manager</span>.</p>
+              <p class="muted">Backend keeps <span class="inline-code">POST /vehicles</span> restricted to <span class="inline-code">fleet_manager</span>.</p>
             </div>
             <div class="card">
               <div class="kicker">Health</div>
@@ -179,4 +203,3 @@
     </script>
   </body>
 </html>
-

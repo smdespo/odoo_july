@@ -1,0 +1,135 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TransitOps Fuel Prediction</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="app.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="sidebar">
+        <div class="brand"><div class="brand-mark">TO</div><div class="brand-copy"><h1>TransitOps</h1><p data-profile-role></p></div></div>
+        <div class="nav-section">
+          <p class="nav-label">Workspace</p>
+          <a class="nav-link" href="fleet_manager_dashboard.html">Dashboard</a>
+          <a class="nav-link" href="vehicle_management_list.html">Vehicles</a>
+          <a class="nav-link" href="driver_management_profile.html">Drivers</a>
+          <a class="nav-link" href="trip_management_dispatch_workflow.html">Trips</a>
+          <a class="nav-link" href="maintenence_fuel_dashboard.html">Maintenance & Fuel</a>
+          <a class="nav-link" href="analytics%20hub%20report.html">Reports</a>
+          <a class="nav-link" href="whether.html">Breakdown AI</a>
+          <a class="nav-link" href="pred.html">Repair AI</a>
+          <a class="nav-link active" href="fuel.html">Fuel AI</a>
+        </div>
+        <div class="sidebar-footer"><button class="btn" data-signout>Sign Out</button></div>
+      </aside>
+
+      <div class="content">
+        <header class="topbar">
+          <div>
+            <h2>Fuel consumption prediction</h2>
+            <p>Forecast route fuel demand and approximate trip spend before dispatch.</p>
+          </div>
+          <div class="topbar-actions">
+            <a class="btn small" href="trip_management_dispatch_workflow.html">Trips</a>
+            <a class="btn small" href="analytics%20hub%20report.html">Reports</a>
+          </div>
+        </header>
+
+        <main class="page stack">
+          <div id="fuel-message" class="hidden"></div>
+          <section class="grid cols-2">
+            <form class="form-card stack" id="fuel-form">
+              <div>
+                <div class="kicker">Dispatch Planning</div>
+                <h3>Fuel forecast inputs</h3>
+              </div>
+              <div class="field-grid">
+                <div class="field"><label>Vehicle Type</label><select id="vehicle_type"><option>Truck</option><option>Van</option><option>Mini Truck</option><option>Bus</option></select></div>
+                <div class="field"><label>Fuel Type</label><select id="fuel_type"><option>Diesel</option><option>Petrol</option><option>CNG</option><option>Electric</option></select></div>
+                <div class="field"><label>Vehicle Age (Years)</label><input id="vehicle_age_years" min="0" type="number" value="4" /></div>
+                <div class="field"><label>Average Mileage (km/l)</label><input id="average_mileage_kmpl" min="0.1" step="0.1" type="number" value="6.8" /></div>
+                <div class="field"><label>Trip Distance (km)</label><input id="trip_distance_km" min="1" type="number" value="450" /></div>
+                <div class="field"><label>Max Capacity (kg)</label><input id="max_capacity_kg" min="1" type="number" value="5000" /></div>
+                <div class="field"><label>Cargo Weight (kg)</label><input id="cargo_weight_kg" min="0" type="number" value="2800" /></div>
+                <div class="field"><label>Traffic Level</label><select id="traffic_level"><option>Low</option><option selected>Medium</option><option>High</option></select></div>
+                <div class="field"><label>Road Type</label><select id="road_type"><option>Highway</option><option selected>Mixed</option><option>City</option><option>Hilly</option></select></div>
+                <div class="field"><label>AC On</label><select id="ac_on"><option value="false">No</option><option value="true">Yes</option></select></div>
+              </div>
+              <div class="form-actions"><button class="btn primary" type="submit">Predict Fuel Need</button></div>
+            </form>
+
+            <div class="card stack">
+              <div>
+                <div class="kicker">Prediction Result</div>
+                <h3>Route fuel estimate</h3>
+              </div>
+              <div class="score-value" id="fuel-liters">-- L</div>
+              <div class="metric-list" id="fuel-metrics">
+                <div class="metric-item"><span>Adjusted Mileage</span><span>Awaiting prediction</span></div>
+                <div class="metric-item"><span>Buffer</span><span>Awaiting prediction</span></div>
+                <div class="metric-item"><span>Estimated Cost</span><span>Awaiting prediction</span></div>
+                <div class="metric-item"><span>Advisory</span><span>Awaiting prediction</span></div>
+              </div>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+      function showMessage(type, text) {
+        const el = document.getElementById("fuel-message");
+        el.className = type === "error" ? "alert" : "notice";
+        el.textContent = text;
+      }
+
+      function readPayload() {
+        return {
+          vehicle_type: document.getElementById("vehicle_type").value,
+          fuel_type: document.getElementById("fuel_type").value,
+          vehicle_age_years: Number(document.getElementById("vehicle_age_years").value),
+          average_mileage_kmpl: Number(document.getElementById("average_mileage_kmpl").value),
+          trip_distance_km: Number(document.getElementById("trip_distance_km").value),
+          max_capacity_kg: Number(document.getElementById("max_capacity_kg").value),
+          cargo_weight_kg: Number(document.getElementById("cargo_weight_kg").value),
+          traffic_level: document.getElementById("traffic_level").value,
+          road_type: document.getElementById("road_type").value,
+          ac_on: document.getElementById("ac_on").value === "true",
+        };
+      }
+
+      async function init() {
+        const session = await TransitOps.initProtectedPage({ allowedRoles: ["fleet_manager", "driver", "financial_analyst"] });
+        if (!session) return;
+
+        document.getElementById("fuel-form").addEventListener("submit", async (event) => {
+          event.preventDefault();
+          try {
+            const result = await TransitOps.request("/ml/predict/fuel-consumption", {
+              method: "POST",
+              body: JSON.stringify(readPayload()),
+            });
+            TransitOps.setText("fuel-liters", `${result.predicted_fuel_required_liters} L`);
+            TransitOps.setHtml("fuel-metrics", `
+              <div class="metric-item"><span>Adjusted Mileage</span><span>${result.adjusted_mileage_kmpl} km/l</span></div>
+              <div class="metric-item"><span>Buffer</span><span>${result.recommended_buffer_liters} L</span></div>
+              <div class="metric-item"><span>Estimated Cost</span><span>${TransitOps.formatCurrency(result.estimated_cost_inr)}</span></div>
+              <div class="metric-item"><span>Advisory</span><span>${TransitOps.escapeHtml(result.advisory)}</span></div>
+            `);
+            showMessage("notice", `Load factor ${result.load_factor_percent}% applied to this forecast.`);
+          } catch (error) {
+            showMessage("error", error.message);
+          }
+        });
+      }
+
+      init();
+    </script>
+  </body>
+</html>

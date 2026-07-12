@@ -1,0 +1,12 @@
+fastapi>=0.110
+uvicorn>=0.29
+python-dotenv>=1.0
+requests>=2.31
+pymongo>=4.6
+dnspython>=2.6
+supabase>=2.5
+numpy>=1.26
+opencv-python>=4.9
+scikit-learn>=1.4
+tensorflow>=2.16
+python-multipart>=0.0.9
